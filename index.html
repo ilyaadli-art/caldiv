@@ -99,7 +99,12 @@
             <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
           </tr>
           <tr>
-            <td>Susunan Litar Akhir</td>
+            <td>Soket Alir Keluar (Gelang)</td>
+            <td>Bilangan Beban × Kuasa / 240V</td>
+            <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
+          </tr>
+          <tr>
+            <td>Soket Alir Keluar (Jejari)</td>
             <td>Bilangan Beban × Kuasa / 240V</td>
             <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
           </tr>
@@ -163,7 +168,8 @@
               <option value="water_heater_controlled">Pemanas Air (Kawalan Suhu)</option>
               <option value="floor_heater">Pemanas Lantai</option>
               <option value="space_heater">Pemanas Ruang</option>
-              <option value="final_circuit">Susunan Litar Akhir</option>
+              <option value="final_circuit_ring">Soket Alir Keluar (Gelang)</option>
+              <option value="final_circuit_radial">Soket Alir Keluar (Jejari)</option>
               <option value="other_sockets">Soket Alir Keluar</option>
             </select>
           </div>
@@ -264,7 +270,7 @@
               groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
               groupEst = groupMax;
               break;
-            case 'final_circuit':
+            case 'final_circuit_ring':
               groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
               const sortCir = [...group].map(l => (l.qty * l.P) / V).sort((a, b) => b - a);
               if (sortCir[0]) groupEst += sortCir[0];
@@ -273,6 +279,15 @@
                 groupEst += others * 0.4;
               }
               break;
+            case 'final_circuit_radial':
+              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
+              const sortCir = [...group].map(l => (l.qty * l.P) / V).sort((a, b) => b - a);
+              if (sortCir[0]) groupEst += sortCir[0];
+              if (sortCir.length > 1) {
+                const others = sortCir.slice(1).reduce((s, x) => s + x, 0);
+                groupEst += others * 0.4;
+              }
+              break;  
             case 'other_sockets':
               const sockets = Math.ceil(group.length / 2);
               const totalSocket = sockets * 20;
@@ -320,7 +335,8 @@
           case 'water_heater_controlled': return 'Pemanas Air (Kawalan Suhu)';
           case 'floor_heater': return 'Pemanas Lantai';
           case 'space_heater': return 'Pemanas Ruang';
-          case 'final_circuit': return 'Susunan Litar Akhir';
+          case 'final_circuit_ring': return 'Soket Alir Keluar (Gelang)';
+          case 'final_circuit_radial': return 'Soket Alir Keluar (Jejari)';
           case 'other_sockets': return 'Soket Alir Keluar';
           default: return type;
         }
@@ -329,6 +345,7 @@
   </script>
 </body>
 </html>
+
 
 
 
