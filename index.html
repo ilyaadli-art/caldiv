@@ -79,7 +79,7 @@
             <td>10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan / bantuan</td>
           </tr>
           <tr>
-            <td>Pemanas Air</td>
+            <td>Pemanas Air (Segera)</td>
             <td>Bilangan Beban × Kuasa / 240V</td>
             <td>100% 2 beban terbesar + 25% beban penuh yang lain</td>
           </tr>
@@ -159,12 +159,12 @@
               <option value="aircond">Penghawa Dingin (A/C)</option>
               <option value="heating_power">Pemanasan dan Kuasa</option>
               <option value="cooking">Perkakas Memasak</option>
-              <option value="water_heater">Pemanas Air</option>
+              <option value="water_heater">Pemanas Air (Segera)</option>
               <option value="water_heater_controlled">Pemanas Air (Kawalan Suhu)</option>
               <option value="floor_heater">Pemanas Lantai</option>
               <option value="space_heater">Pemanas Ruang</option>
               <option value="final_circuit">Susunan Litar Akhir</option>
-              <option value="other_sockets">Soket Alir Keluar Lain</option>
+              <option value="other_sockets">Soket Alir Keluar</option>
             </select>
           </div>
           <button class="btn-danger remove-load">Padam</button>
@@ -316,12 +316,12 @@
           case 'aircond': return 'Penghawa Dingin (A/C)';
           case 'heating_power': return 'Pemanasan dan Kuasa';
           case 'cooking': return 'Perkakas Memasak';
-          case 'water_heater': return 'Pemanas Air';
+          case 'water_heater': return 'Pemanas Air (Segera)';
           case 'water_heater_controlled': return 'Pemanas Air (Kawalan Suhu)';
           case 'floor_heater': return 'Pemanas Lantai';
           case 'space_heater': return 'Pemanas Ruang';
           case 'final_circuit': return 'Susunan Litar Akhir';
-          case 'other_sockets': return 'Soket Alir Keluar Lain';
+          case 'other_sockets': return 'Soket Alir Keluar';
           default: return type;
         }
       }
@@ -329,5 +329,6 @@
   </script>
 </body>
 </html>
+
 
 
