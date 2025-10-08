@@ -6,9 +6,39 @@
   <title>Kalkulator Faktor Kepelbagaian | MS 1979</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; padding: 0; color:#1e293b; }
-    header { background: linear-gradient(90deg,#2563eb,#1e40af); color: #fff; padding: 2rem 1rem; text-align: center; }
+    header { background: linear-gradient(90deg,#2563eb,#1e40af); color: #fff; padding: 1.5rem 1rem; text-align: center; position: relative; }
     header h1 { margin:0; font-size: 1.8rem; }
     header p { margin:0.3rem 0 0; }
+    
+    /* Navigation Menu */
+    .nav-menu { 
+      display: flex; 
+      justify-content: center; 
+      background: #1e40af; 
+      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+    }
+    .nav-button { 
+      background: transparent; 
+      color: #fff; 
+      border: 2px solid #fff; 
+      padding: 0.5rem 1.5rem; 
+      margin: 0 0.5rem; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 0.95rem; 
+      transition: all 0.3s ease;
+    }
+    .nav-button:hover { 
+      background: #fff; 
+      color: #1e40af; 
+    }
+    .nav-button.active { 
+      background: #fff; 
+      color: #1e40af; 
+      font-weight: bold;
+    }
+    
     .container { max-width: 1100px; margin: auto; padding: 1rem; }
     .card { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
     .form-group { margin-bottom: 1rem; }
@@ -25,6 +55,30 @@
     tfoot td { font-weight: bold; background: #f1f5f9; text-align: center; }
     hr { margin:1rem 0; border:0; border-top:1px solid #e2e8f0;}
     h2 { margin-top:0; color:#1e40af; }
+    
+    /* Content Sections */
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+    
+    /* Questions Section */
+    .question-item { 
+      background: #f8fafc; 
+      padding: 1rem; 
+      margin-bottom: 1rem; 
+      border-radius: 8px; 
+      border-left: 4px solid #2563eb;
+    }
+    .question-text { font-weight: bold; margin-bottom: 0.5rem; }
+    .answer-options { margin: 0.5rem 0; }
+    .answer-option { margin: 0.3rem 0; }
+    .explanation { 
+      background: #e0f2fe; 
+      padding: 0.8rem; 
+      border-radius: 6px; 
+      margin-top: 0.5rem; 
+      display: none;
+    }
+    .explanation.show { display: block; }
   </style>
 </head>
 <body>
@@ -33,108 +87,226 @@
     <p>Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
   </header>
 
+  <div class="nav-menu">
+    <button class="nav-button active" data-section="calculation-section">Pengiraan</button>
+    <button class="nav-button" data-section="questions-section">Soalan</button>
+  </div>
+
   <div class="container">
-    <div class="card">
-      <div class="form-group">
-        <label for="voltage">Voltan Sistem (V)</label>
-        <input type="number" id="voltage" value="240" readonly>
+    <!-- Calculation Section -->
+    <div id="calculation-section" class="content-section active">
+      <div class="card">
+        <div class="form-group">
+          <label for="voltage">Voltan Sistem (V)</label>
+          <input type="number" id="voltage" value="240" readonly>
+        </div>
+
+        <div id="load-list"></div>
+        <button id="calculate-btn">Kira</button>
+        <button id="add-load">Tambah Beban</button>
+
+        <div id="results"></div>
       </div>
 
-      <div id="load-list"></div>
-      <button id="calculate-btn">Kira</button>
-      <button id="add-load">Tambah Beban</button>
+      <div class="card">
+        <h2>Rujukan Faktor Kepelbagaian</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Jenis Beban</th>
+              <th>Arus Maksimum</th>
+              <th>Arus Anggaran</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Lampu (Filamen)</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>66% daripada jumlah arus maksimum</td>
+            </tr>
+            <tr>
+              <td>Lampu (Kalimantang)</td>
+              <td>Bilangan Beban × Kuasa × 1.8 / 240V</td>
+              <td>66% daripada jumlah arus maksimum</td>
+            </tr>
+            <tr>
+              <td>Pemanasan dan Kuasa</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% jumlah permintaan arus sehingga 10A + 50% permintaan arus selebihnya</td>
+            </tr>
+            <tr>
+              <td>Pemasak</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan / bantuan</td>
+            </tr>
+            <tr>
+              <td>Pemanas Air (Segera)</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% 2 beban terbesar + 25% beban penuh yang lain</td>
+            </tr>
+            <tr>
+              <td>Pemanas Air (Kawalan Laras Suhu)</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
+            </tr>
+            <tr>
+              <td>Pemanas Lantai</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
+            </tr>
+            <tr>
+              <td>Pemanas Ruang Terma</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
+            </tr>
+            <tr>
+              <td>Soket Alir Keluar (Gelang)</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
+            </tr>
+            <tr>
+              <td>Soket Alir Keluar (Jejari)</td>
+              <td>Bilangan Beban × Kuasa / 240V</td>
+              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
+            </tr>
+            <tr>
+              <td>Soket Alir Keluar (selain 9 peralatan khas)</td>
+              <td>Kumpulkan dalam litar 2 soket (20A) dan 3 soket (32A)</td>
+              <td>100% litar terbesar + 40% litar selebihnya</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div id="results"></div>
+      <div class="card">
+        <h2>Cara Menggunakan Kalkulator</h2>
+        <ol>
+          <li>Pilih <b>Jenis Beban</b> daripada senarai.</li>
+          <li>Masukkan <b>Bilangan Beban</b> dan <b>Kuasa (W)</b> setiap beban.</li>
+          <li>Untuk Soket Alir Keluar, masukkan nilai dalam <b>Ampere (A)</b>.</li>
+          <li>Tambah seberapa banyak beban yang diperlukan.</li>
+          <li>Sekurang-kurangnya 1 beban perlu ada (tidak boleh padam semua).</li>
+          <li>Tekan butang <b>Kira</b> untuk melihat keputusan arus maksimum dan arus anggaran.</li>
+        </ol>
+      </div>
     </div>
 
-    <div class="card">
-      <h1><img src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" alt="Example image" width="500">
-</h1>
-      <h2>Rujukan Faktor Kepelbagaian</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Jenis Beban</th>
-            <th>Arus Maksimum</th>
-            <th>Arus Anggaran</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Lampu (Filamen)</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>66% daripada jumlah arus maksimum</td>
-          </tr>
-          <tr>
-            <td>Lampu (Kalimantang)</td>
-            <td>Bilangan Beban × Kuasa × 1.8 / 240V</td>
-            <td>66% daripada jumlah arus maksimum</td>
-          </tr>
-          <tr>
-            <td>Pemanasan dan Kuasa</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% jumlah permintaan arus sehingga 10A + 50% permintaan arus selebihnya</td>
-          </tr>
-          <tr>
-            <td>Pemasak</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan / bantuan</td>
-          </tr>
-          <tr>
-            <td>Pemanas Air (Segera)</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% 2 beban terbesar + 25% beban penuh yang lain</td>
-          </tr>
-          <tr>
-            <td>Pemanas Air (Kawalan Laras Suhu)</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-          </tr>
-          <tr>
-            <td>Pemanas Lantai</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-          </tr>
-          <tr>
-            <td>Pemanas Ruang Terma</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-          </tr>
-          <tr>
-            <td>Soket Alir Keluar (Gelang)</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-          </tr>
-          <tr>
-            <td>Soket Alir Keluar (Jejari)</td>
-            <td>Bilangan Beban × Kuasa / 240V</td>
-            <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-          </tr>
-          <tr>
-            <td>Soket Alir Keluar (selain 9 peralatan khas)</td>
-            <td>Contoh: 2×13A=20A, 4×13A=20A, Jumlah=80A</td>
-            <td>100% titik pengunaan terbesar + 40% arus titik pengunaan lain<br>
-              Contoh: 100%×20A + 40%×(80A–20A) = 20A + 24A = 44A
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Questions Section -->
+    <div id="questions-section" class="content-section">
+      <div class="card">
+        <h2>Soalan Kuiz Faktor Kepelbagaian</h2>
+        <p>Uji kefahaman anda tentang faktor kepelbagaian berdasarkan MS 1979.</p>
+        <img src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" alt="Example image" width="500">
+        
+        <div id="questions-list">
+          <!-- Soalan 1 -->
+          <div class="question-item">
+            <div class="question-text">1. Apakah faktor kepelbagaian untuk lampu filamen?</div>
+            <div class="answer-options">
+              <div class="answer-option">
+                <input type="radio" name="q1" value="a"> a) 100% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q1" value="b"> b) 66% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q1" value="c"> c) 50% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q1" value="d"> d) 75% arus maksimum
+              </div>
+            </div>
+            <button class="check-answer" data-question="1">Semak Jawapan</button>
+            <div class="explanation" id="explanation-1">
+              <strong>Jawapannya ialah: b) 66% arus maksimum</strong><br>
+              Untuk lampu filamen, faktor kepelbagaian yang dibenarkan ialah 66% daripada jumlah arus maksimum.
+            </div>
+          </div>
 
-    <div class="card">
-      <h2>Cara Menggunakan Kalkulator</h2>
-      <ol>
-        <li>Pilih <b>Jenis Beban</b> daripada senarai.</li>
-        <li>Masukkan <b>Bilangan Beban</b> dan <b>Kuasa (W)</b> setiap beban.</li>
-        <li>Tambah seberapa banyak beban yang diperlukan.</li>
-        <li>Sekurang-kurangnya 1 beban perlu ada (tidak boleh padam semua).</li>
-        <li>Tekan butang <b>Kira</b> untuk melihat keputusan arus maksimum dan arus anggaran.</li>
-      </ol>
+          <!-- Soalan 2 -->
+          <div class="question-item">
+            <div class="question-text">2. Bagaimana pengiraan arus anggaran untuk perkakas memasak?</div>
+            <div class="answer-options">
+              <div class="answer-option">
+                <input type="radio" name="q2" value="a"> a) 100% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q2" value="b"> b) 10A + 30% beban penuh + 5A untuk kawalan
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q2" value="c"> c) 66% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q2" value="d"> d) 50% arus maksimum
+              </div>
+            </div>
+            <button class="check-answer" data-question="2">Semak Jawapan</button>
+            <div class="explanation" id="explanation-2">
+              <strong>Jawapannya ialah: b) 10A + 30% beban penuh + 5A untuk kawalan</strong><br>
+              Untuk perkakas memasak, arus anggaran dikira sebagai 10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan/bantuan.
+            </div>
+          </div>
+
+          <!-- Soalan 3 -->
+          <div class="question-item">
+            <div class="question-text">3. Untuk pemanas air dengan kawalan laras suhu, apakah faktor kepelbagaian yang dibenarkan?</div>
+            <div class="answer-options">
+              <div class="answer-option">
+                <input type="radio" name="q3" value="a"> a) 66% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q3" value="b"> b) 50% arus maksimum
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q3" value="c"> c) 100% arus maksimum (tiada faktor kepelbagaian)
+              </div>
+              <div class="answer-option">
+                <input type="radio" name="q3" value="d"> d) 75% arus maksimum
+              </div>
+            </div>
+            <button class="check-answer" data-question="3">Semak Jawapan</button>
+            <div class="explanation" id="explanation-3">
+              <strong>Jawapannya ialah: c) 100% arus maksimum (tiada faktor kepelbagaian)</strong><br>
+              Untuk pemanas air dengan kawalan laras suhu, faktor kepelbagaian tidak dibenarkan dan 100% arus maksimum mesti digunakan.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // Navigation functionality
+      const navButtons = document.querySelectorAll('.nav-button');
+      const contentSections = document.querySelectorAll('.content-section');
+      
+      navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const targetSection = this.getAttribute('data-section');
+          
+          // Update active button
+          navButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Show target section
+          contentSections.forEach(section => section.classList.remove('active'));
+          document.getElementById(targetSection).classList.add('active');
+        });
+      });
+
+      // Questions functionality
+      const checkAnswerButtons = document.querySelectorAll('.check-answer');
+      
+      checkAnswerButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const questionNum = this.getAttribute('data-question');
+          const explanation = document.getElementById(explanation-${questionNum});
+          explanation.classList.add('show');
+        });
+      });
+
+      // Existing calculator functionality
       const loadList = document.getElementById('load-list');
       const addLoadBtn = document.getElementById('add-load');
       const calcBtn = document.getElementById('calculate-btn');
@@ -154,8 +326,9 @@
             <input type="number" class="load-qty" min="1" value="1">
           </div>
           <div class="form-group">
-            <label>Kuasa Setiap Beban (W)</label>
+            <label>Kuasa Setiap Beban</label>
             <input type="number" class="load-power" value="60">
+            <small>Untuk Soket Alir Keluar, masukkan nilai dalam Ampere (A). Untuk lain-lain, masukkan dalam Watt (W)</small>
           </div>
           <div class="form-group">
             <label>Jenis Beban</label>
@@ -172,7 +345,7 @@
               <option value="space_heater">Pemanas Ruang</option>
               <option value="final_circuit_ring">Soket Alir Keluar (Gelang)</option>
               <option value="final_circuit_radial">Soket Alir Keluar (Jejari)</option>
-              <option value="other_sockets">Soket Alir Keluar</option>
+              <option value="other_sockets">Soket Alir Keluar (selain 9 peralatan khas)</option>
             </select>
           </div>
           <button class="btn-danger remove-load">Padam</button>
@@ -241,30 +414,29 @@
               groupEst = 10 + (groupMax > 10 ? (groupMax - 10) * 0.3 : 0) + 5;
               break;
             case "water_heater":
-  		groupMax = group.reduce((s, l) => s + (l.qty*l.P)/V, 0);
+              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
 
-  		// Pecahkan setiap unit beban
-  		let allLoads = [];
-  		group.forEach(l => {
-  		  for (let i = 0; i < l.qty; i++) {
-  		    allLoads.push(l.P / V);
-   		 }
-  		});
+              // Pecahkan setiap unit beban
+              let allLoads = [];
+              group.forEach(l => {
+                for (let i = 0; i < l.qty; i++) {
+                  allLoads.push(l.P / V);
+                }
+              });
 
-  		// Susun ikut besar → kecil
-  		allLoads.sort((a,b) => b-a);
+              // Susun ikut besar → kecil
+              allLoads.sort((a,b) => b-a);
 
-  		// 2 beban terbesar 100%
-  		if (allLoads[0]) groupEst += allLoads[0];
-  		if (allLoads[1]) groupEst += allLoads[1];
+              // 2 beban terbesar 100%
+              if (allLoads[0]) groupEst += allLoads[0];
+              if (allLoads[1]) groupEst += allLoads[1];
 
-  		// Lebihan 25%
-  		if (allLoads.length > 2) {
-   		 const baki = allLoads.slice(2).reduce((s,x)=>s+x,0);
-  		  groupEst += baki * 0.25;
-  		}
-  		break;
-
+              // Lebihan 25%
+              if (allLoads.length > 2) {
+                const baki = allLoads.slice(2).reduce((s,x)=>s+x,0);
+                groupEst += baki * 0.25;
+              }
+              break;
 
             case 'water_heater_controlled':
             case 'floor_heater':
@@ -273,14 +445,6 @@
               groupEst = groupMax;
               break;
             case 'final_circuit_ring':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              const sortCir = [...group].map(l => (l.qty * l.P) / V).sort((a, b) => b - a);
-              if (sortCir[0]) groupEst += sortCir[0];
-              if (sortCir.length > 1) {
-                const others = sortCir.slice(1).reduce((s, x) => s + x, 0);
-                groupEst += others * 0.4;
-              }
-              break;
             case 'final_circuit_radial':
               groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
               const sortCir = [...group].map(l => (l.qty * l.P) / V).sort((a, b) => b - a);
@@ -291,10 +455,60 @@
               }
               break;  
             case 'other_sockets':
-              const sockets = Math.ceil(group.length / 2);
-              const totalSocket = sockets * 20;
-              groupMax = totalSocket;
-              groupEst = sockets === 1 ? 20 : 20 + (totalSocket - 20) * 0.4;
+              // Untuk Soket Alir Keluar, gunakan nilai Ampere terus (tidak perlu bahagi dengan voltan)
+              let totalSockets = 0;
+              group.forEach(l => {
+                totalSockets += l.qty;
+              });
+
+              console.log("Total sockets:", totalSockets);
+
+              // Untuk 23 soket: 4 litar 2 soket + 5 litar 3 soket
+              let circuits2Socket, circuits3Socket;
+              
+              if (totalSockets <= 2) {
+                circuits2Socket = 1;
+                circuits3Socket = 0;
+              } else {
+                // Optimize untuk dapatkan kombinasi terbaik 2 soket dan 3 soket
+                circuits3Socket = Math.floor((totalSockets - 1) / 3);
+                circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
+                
+                // Pastikan jumlah soket betul
+                while (circuits2Socket * 2 + circuits3Socket * 3 < totalSockets) {
+                  circuits3Socket++;
+                  circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
+                }
+              }
+
+              // Kira arus maksimum
+              groupMax = (circuits2Socket * 20) + (circuits3Socket * 32);
+
+              // Kira arus anggaran: 100% litar terbesar + 40% litar selebihnya
+              const circuitValues = [];
+              
+              // Tambah litar 2 soket
+              for (let i = 0; i < circuits2Socket; i++) {
+                circuitValues.push(20);
+              }
+              
+              // Tambah litar 3 soket
+              for (let i = 0; i < circuits3Socket; i++) {
+                circuitValues.push(32);
+              }
+              
+              if (circuitValues.length > 0) {
+                const sortedCircuits = [...circuitValues].sort((a, b) => b - a);
+                groupEst = sortedCircuits[0]; // 100% litar terbesar
+                
+                if (sortedCircuits.length > 1) {
+                  const remainingCircuits = sortedCircuits.slice(1).reduce((sum, circuit) => sum + circuit, 0);
+                  groupEst += remainingCircuits * 0.4; // 40% litar selebihnya
+                }
+              }
+
+              console.log("Circuits 2Socket:", circuits2Socket, "Circuits 3Socket:", circuits3Socket);
+              console.log("Group Max:", groupMax, "Group Est:", groupEst);
               break;
             default:
               groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
@@ -306,8 +520,8 @@
 
           rows += `<tr>
             <td>${labelType(type)}</td>
-            <td style="text-align:center">${groupMax.toFixed(2)}</td>
-            <td style="text-align:center">${groupEst.toFixed(2)}</td>
+            <td style="text-align:center">${groupMax.toFixed(2)} A</td>
+            <td style="text-align:center">${groupEst.toFixed(2)} A</td>
           </tr>`;
         }
 
@@ -319,7 +533,11 @@
             </thead>
             <tbody>${rows}</tbody>
             <tfoot>
-              <tr><td style="text-align:center">Jumlah</td><td style="text-align:center">${totalMax.toFixed(2)}</td><td style="text-align:center">${totalEst.toFixed(2)}</td></tr>
+              <tr>
+                <td style="text-align:center"><strong>Jumlah</strong></td>
+                <td style="text-align:center"><strong>${totalMax.toFixed(2)} A</strong></td>
+                <td style="text-align:center"><strong>${totalEst.toFixed(2)} A</strong></td>
+              </tr>
             </tfoot>
           </table>
         `;
@@ -339,7 +557,7 @@
           case 'space_heater': return 'Pemanas Ruang';
           case 'final_circuit_ring': return 'Soket Alir Keluar (Gelang)';
           case 'final_circuit_radial': return 'Soket Alir Keluar (Jejari)';
-          case 'other_sockets': return 'Soket Alir Keluar';
+          case 'other_sockets': return 'Soket Alir Keluar (selain 9 peralatan khas)';
           default: return type;
         }
       }
@@ -347,9 +565,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
