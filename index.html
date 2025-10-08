@@ -301,7 +301,7 @@
       checkAnswerButtons.forEach(button => {
         button.addEventListener('click', function() {
           const questionNum = this.getAttribute('data-question');
-          const explanation = document.getElementById(explanation-${questionNum});
+          const explanation = document.getElementById(`explanation-${questionNum}`);
           explanation.classList.add('show');
         });
       });
