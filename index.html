@@ -55,10 +55,10 @@
     tfoot td { font-weight: bold; background: #f1f5f9; text-align: center; }
     hr { margin:1rem 0; border:0; border-top:1px solid #e2e8f0;}
     h2 { margin-top:0; color:#1e40af; }
-
+    
     /* Content Sections */
     .content-section { display: none; }
-    .content-section.active { display: none; }
+    .content-section.active { display: block; }
     
     /* Questions Section */
     .question-item { 
@@ -88,88 +88,11 @@
   </header>
 
   <div class="nav-menu">
-    <button class="nav-button" data-section="notes-section">Nota</button>
+    <button class="nav-button" data-section="Notes-section">Nota</button>
     <button class="nav-button active" data-section="calculation-section">Pengiraan</button>
     <button class="nav-button" data-section="questions-section">Soalan</button>
   </div>
 
-  <!-- Notes Section -->
-    <div id="notes-section" class="content-section">
-      <div class="card">
-        <h3>Formula Faktor Kepelbagaian</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Jenis Beban</th>
-              <th>Arus Maksimum</th>
-              <th>Arus Anggaran</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Lampu (Filamen)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Lampu (Kalimantang)</td>
-              <td>Bilangan Beban × Kuasa × 1.8 / 230V</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Kipas Siling</td>
-              <td>Bilangan Beban × Kuasa / 230V x 0.85</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Pemanasan dan Kuasa</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% jumlah permintaan arus sehingga 10A + 50% permintaan arus selebihnya</td>
-            </tr>
-            <tr>
-              <td>Pemasak</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan / bantuan</td>
-            </tr>
-            <tr>
-              <td>Pemanas Air (Segera)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% 2 beban terbesar + 25% beban penuh yang lain</td>
-            </tr>
-            <tr>
-              <td>Pemanas Air (Kawalan Laras Suhu)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Pemanas Lantai</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Pemanas Ruang Terma</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (Gelang)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (Jejari)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (selain 9 peralatan khas)</td>
-              <td>Kumpulkan dalam litar 2 soket (20A) dan 3 soket (32A)</td>
-              <td>100% litar terbesar + 40% litar selebihnya</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
   <div class="container">
     <!-- Calculation Section -->
     <div id="calculation-section" class="content-section active">
@@ -648,11 +571,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
 
 
 
