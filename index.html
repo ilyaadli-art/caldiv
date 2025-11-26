@@ -1,585 +1,427 @@
 <!DOCTYPE html>
 <html lang="ms">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalkulator Faktor Kepelbagaian | MS 1979</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; padding: 0; color:#1e293b; }
-    header { background: linear-gradient(90deg,#2563eb,#1e40af); color: #fff; padding: 1.5rem 1rem; text-align: center; position: relative; }
-    header h1 { margin:0; font-size: 1.8rem; }
-    header p { margin:0.3rem 0 0; }
-    
-    /* Navigation Menu */
-    .nav-menu { 
-      display: flex; 
-      justify-content: center; 
-      background: #1e40af; 
-      padding: 0.5rem 0;
-      margin-bottom: 1rem;
-    }
-    .nav-button { 
-      background: transparent; 
-      color: #fff; 
-      border: 2px solid #fff; 
-      padding: 0.5rem 1.5rem; 
-      margin: 0 0.5rem; 
-      border-radius: 6px; 
-      cursor: pointer; 
-      font-size: 0.95rem; 
-      transition: all 0.3s ease;
-    }
-    .nav-button:hover { 
-      background: #fff; 
-      color: #1e40af; 
-    }
-    .nav-button.active { 
-      background: #fff; 
-      color: #1e40af; 
-      font-weight: bold;
-    }
-    
-    .container { max-width: 1100px; margin: auto; padding: 1rem; }
-    .card { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
-    .form-group { margin-bottom: 1rem; }
-    label { font-weight: bold; display: block; margin-bottom: 0.3rem; }
-    input, select { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; }
-    button { background: #2563eb; color: #fff; padding: 0.7rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-size:0.95rem; }
-    button:hover { background: #1e40af; }
-    .btn-danger { background: #ef4444; }
-    .btn-danger:hover { background: #b91c1c; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
-    table, th, td { border: 1px solid #e2e8f0; }
-    th, td { padding: 0.7rem; text-align: left; vertical-align: top; }
-    th { background: #2563eb; color: #fff; text-align: center; }
-    tfoot td { font-weight: bold; background: #f1f5f9; text-align: center; }
-    hr { margin:1rem 0; border:0; border-top:1px solid #e2e8f0;}
-    h2 { margin-top:0; color:#1e40af; }
-    
-    /* Content Sections */
-    .content-section { display: none; }
-    .content-section.active { display: block; }
-    
-    /* Questions Section */
-    .question-item { 
-      background: #f8fafc; 
-      padding: 1rem; 
-      margin-bottom: 1rem; 
-      border-radius: 8px; 
-      border-left: 4px solid #2563eb;
-    }
-    .question-text { font-weight: bold; margin-bottom: 0.5rem; }
-    .answer-options { margin: 0.5rem 0; }
-    .answer-option { margin: 0.3rem 0; }
-    .explanation { 
-      background: #e0f2fe; 
-      padding: 0.8rem; 
-      border-radius: 6px; 
-      margin-top: 0.5rem; 
-      display: none;
-    }
-    .explanation.show { display: block; }
-  </style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalkulator Faktor Kepelbagaian | MS 1979</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
 </head>
-<body>
-  <header>
-    <h1>Kalkulator Faktor Kepelbagaian</h1>
-    <p>Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
-  </header>
-
-  <div class="nav-menu">
-    <button class="nav-button" data-section="notes-section">Nota</button>
-    <button class="nav-button active" data-section="calculation-section">Pengiraan</button>
-    <button class="nav-button" data-section="questions-section">Soalan</button>
-  </div>
-
-    <div class="container">
-    <!-- Notes Section -->
-    <div id="notes-section" class="content-section">
-    <div class="card">
-        <h2>Formula Faktor Kepelbagaian</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Jenis Beban</th>
-              <th>Arus Maksimum</th>
-              <th>Arus Anggaran</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Lampu (Filamen)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Lampu (Kalimantang)</td>
-              <td>Bilangan Beban × Kuasa × 1.8 / 230V</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Kipas Siling</td>
-              <td>Bilangan Beban × Kuasa / 230V x 0.85</td>
-              <td>66% daripada jumlah arus maksimum</td>
-            </tr>
-            <tr>
-              <td>Pemanasan dan Kuasa</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% jumlah permintaan arus sehingga 10A + 50% permintaan arus selebihnya</td>
-            </tr>
-            <tr>
-              <td>Pemasak</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan / bantuan</td>
-            </tr>
-            <tr>
-              <td>Pemanas Air (Segera)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% 2 beban terbesar + 25% beban penuh yang lain</td>
-            </tr>
-            <tr>
-              <td>Pemanas Air (Kawalan Laras Suhu)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Pemanas Lantai</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Pemanas Ruang Terma</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% (Faktor Kepelbagaian tidak dibenarkan)</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (Gelang)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (Jejari)</td>
-              <td>Bilangan Beban × Kuasa / 230V</td>
-              <td>100% arus litar terbesar + 40% jumlah arus litar akhir lain</td>
-            </tr>
-            <tr>
-              <td>Soket Alir Keluar (selain 9 peralatan khas)</td>
-              <td>Kumpulkan dalam litar 2 soket (20A) dan 3 soket (32A)</td>
-              <td>100% litar terbesar + 40% litar selebihnya</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    <!-- Calculation Section -->
-    <div id="calculation-section" class="content-section active">
-      <div class="card">
-        <div class="form-group">
-          <label for="voltage">Voltan Sistem (V)</label>
-          <input type="number" id="voltage" value="230" readonly>
-        </div>
-
-        <div id="load-list"></div>
-        <button id="calculate-btn">Kira</button>
-        <button id="add-load">Tambah Beban</button>
-
-        <div id="results"></div>
-      </div>
-
-      <div class="card">
-        <h2>Cara Menggunakan Kalkulator</h2>
-        <ol>
-          <li>Pilih <b>Jenis Beban</b> daripada senarai.</li>
-          <li>Masukkan <b>Bilangan Beban</b> dan <b>Kuasa (W)</b> setiap beban.</li>
-          <li>Untuk Soket Alir Keluar, masukkan nilai dalam <b>Ampere (A)</b>.</li>
-          <li>Tambah seberapa banyak beban yang diperlukan.</li>
-          <li>Sekurang-kurangnya 1 beban perlu ada (tidak boleh padam semua).</li>
-          <li>Tekan butang <b>Kira</b> untuk melihat keputusan arus maksimum dan arus anggaran.</li>
-        </ol>
-      </div>
-    </div>
-
-    <!-- Questions Section -->
-    <div id="questions-section" class="content-section">
-      <div class="card">
-        <h2>Soalan Kuiz Faktor Kepelbagaian</h2>
-        <p>Uji kefahaman anda tentang faktor kepelbagaian berdasarkan MS 1979.</p>
-        <img src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" alt="Example image" width="500">
-        
-        <div id="questions-list">
-          <!-- Soalan 1 -->
-          <div class="question-item">
-            <div class="question-text">1. Apakah faktor kepelbagaian untuk lampu filamen?</div>
-            <div class="answer-options">
-              <div class="answer-option">
-                <input type="radio" name="q1" value="a"> a) 100% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q1" value="b"> b) 66% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q1" value="c"> c) 50% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q1" value="d"> d) 75% arus maksimum
-              </div>
-            </div>
-            <button class="check-answer" data-question="1">Semak Jawapan</button>
-            <div class="explanation" id="explanation-1">
-              <strong>Jawapannya ialah: b) 66% arus maksimum</strong><br>
-              Untuk lampu filamen, faktor kepelbagaian yang dibenarkan ialah 66% daripada jumlah arus maksimum.
-            </div>
-          </div>
-
-          <!-- Soalan 2 -->
-          <div class="question-item">
-            <div class="question-text">2. Bagaimana pengiraan arus anggaran untuk perkakas memasak?</div>
-            <div class="answer-options">
-              <div class="answer-option">
-                <input type="radio" name="q2" value="a"> a) 100% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q2" value="b"> b) 10A + 30% beban penuh + 5A untuk kawalan
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q2" value="c"> c) 66% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q2" value="d"> d) 50% arus maksimum
-              </div>
-            </div>
-            <button class="check-answer" data-question="2">Semak Jawapan</button>
-            <div class="explanation" id="explanation-2">
-              <strong>Jawapannya ialah: b) 10A + 30% beban penuh + 5A untuk kawalan</strong><br>
-              Untuk perkakas memasak, arus anggaran dikira sebagai 10A + 30% beban penuh peralatan tersambung + 5A untuk litar kawalan/bantuan.
-            </div>
-          </div>
-
-          <!-- Soalan 3 -->
-          <div class="question-item">
-            <div class="question-text">3. Untuk pemanas air dengan kawalan laras suhu, apakah faktor kepelbagaian yang dibenarkan?</div>
-            <div class="answer-options">
-              <div class="answer-option">
-                <input type="radio" name="q3" value="a"> a) 66% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q3" value="b"> b) 50% arus maksimum
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q3" value="c"> c) 100% arus maksimum (tiada faktor kepelbagaian)
-              </div>
-              <div class="answer-option">
-                <input type="radio" name="q3" value="d"> d) 75% arus maksimum
-              </div>
-            </div>
-            <button class="check-answer" data-question="3">Semak Jawapan</button>
-            <div class="explanation" id="explanation-3">
-              <strong>Jawapannya ialah: c) 100% arus maksimum (tiada faktor kepelbagaian)</strong><br>
-              Untuk pemanas air dengan kawalan laras suhu, faktor kepelbagaian tidak dibenarkan dan 100% arus maksimum mesti digunakan.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Navigation functionality
-      const navButtons = document.querySelectorAll('.nav-button');
-      const contentSections = document.querySelectorAll('.content-section');
-      
-      navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const targetSection = this.getAttribute('data-section');
-          
-          // Update active button
-          navButtons.forEach(btn => btn.classList.remove('active'));
-          this.classList.add('active');
-          
-          // Show target section
-          contentSections.forEach(section => section.classList.remove('active'));
-          document.getElementById(targetSection).classList.add('active');
-        });
-      });
-
-      // Questions functionality
-      const checkAnswerButtons = document.querySelectorAll('.check-answer');
-      
-      checkAnswerButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const questionNum = this.getAttribute('data-question');
-          const explanation = document.getElementById(`explanation-${questionNum}`);
-          explanation.classList.add('show');
-        });
-      });
-
-      // Existing calculator functionality
-      const loadList = document.getElementById('load-list');
-      const addLoadBtn = document.getElementById('add-load');
-      const calcBtn = document.getElementById('calculate-btn');
-      const resultsDiv = document.getElementById('results');
-      const voltageInput = document.getElementById('voltage');
-
-      addLoad();
-      addLoadBtn.addEventListener('click', addLoad);
-      calcBtn.addEventListener('click', calculate);
-
-      function addLoad() {
-        const div = document.createElement('div');
-        div.className = 'load-item';
-        div.innerHTML = `
-          <div class="form-group">
-            <label>Bilangan Beban</label>
-            <input type="number" class="load-qty" min="1" value="1">
-          </div>
-          <div class="form-group">
-            <label>Kuasa Setiap Beban</label>
-            <input type="number" class="load-power" value="60">
-            <small>Untuk Soket Alir Keluar, masukkan nilai dalam Ampere (A). Untuk lain-lain, masukkan dalam Watt (W)</small>
-          </div>
-          <div class="form-group">
-            <label>Jenis Beban</label>
-            <select class="load-type">
-              <option value="lighting">Lampu (Filamen)</option>
-              <option value="fluorescent">Lampu (Kalimantang)</option>
-              <option value="ceiling_fan">Kipas Siling</option>
-              <option value="aircond">Penghawa Dingin (A/C)</option>
-              <option value="heating_power">Pemanasan dan Kuasa</option>
-              <option value="cooking">Perkakas Memasak</option>
-              <option value="water_heater">Pemanas Air (Segera)</option>
-              <option value="water_heater_controlled">Pemanas Air (Kawalan Suhu)</option>
-              <option value="floor_heater">Pemanas Lantai</option>
-              <option value="space_heater">Pemanas Ruang</option>
-              <option value="final_circuit_ring">Soket Alir Keluar (Gelang)</option>
-              <option value="final_circuit_radial">Soket Alir Keluar (Jejari)</option>
-              <option value="other_sockets">Soket Alir Keluar (selain 9 peralatan khas)</option>
-            </select>
-          </div>
-          <button class="btn-danger remove-load">Padam</button>
-          <hr>
-        `;
-        div.querySelector('.remove-load').addEventListener('click', () => {
-          if (document.querySelectorAll('.load-item').length === 1) {
-            alert("Sekurang-kurangnya satu beban perlu ada. Anda tidak boleh padam semua beban.");
-          } else {
-            div.remove();
-          }
-        });
-        loadList.appendChild(div);
-      }
-
-      function calculate() {
-        const V = parseFloat(voltageInput.value);
-        const loads = Array.from(document.querySelectorAll('.load-item')).map(item => {
-          const qty = parseFloat(item.querySelector('.load-qty').value) || 0;
-          const P = parseFloat(item.querySelector('.load-power').value) || 0;
-          const type = item.querySelector('.load-type').value;
-          return { qty, P, type };
-        }).filter(l => l.qty > 0 && l.P > 0);
-
-        if (loads.length === 0) {
-          alert("Anda perlu mempunyai sekurang-kurangnya satu beban untuk pengiraan.");
-          return;
-        }
-
-        let totalMax = 0, totalEst = 0;
-        let rows = '';
-
-        const groups = {};
-        loads.forEach(l => {
-          if (!groups[l.type]) groups[l.type] = [];
-          groups[l.type].push(l);
-        });
-
-        for (const [type, group] of Object.entries(groups)) {
-          let groupMax = 0;
-          let groupEst = 0;
-
-          switch (type) {
-            case 'lighting':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              groupEst = groupMax * 0.66;
-              break;
-            case 'fluorescent':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P * 1.8) / V, 0);
-              groupEst = groupMax * 0.66;
-              break;
-            case 'ceiling_fan':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / (V * 0.85), 0);
-              groupEst = groupMax * 0.66;
-              break;
-            case 'aircond':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / (V * 0.85), 0);
-              groupEst = groupMax;
-              break;
-            case 'heating_power':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              groupEst = groupMax <= 10 ? groupMax : 10 + (groupMax - 10) * 0.5;
-              break;
-            case 'cooking':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              groupEst = 10 + (groupMax > 10 ? (groupMax - 10) * 0.3 : 0) + 5;
-              break;
-            case "water_heater":
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-
-              // Pecahkan setiap unit beban
-              let allLoads = [];
-              group.forEach(l => {
-                for (let i = 0; i < l.qty; i++) {
-                  allLoads.push(l.P / V);
-                }
-              });
-
-              // Susun ikut besar → kecil
-              allLoads.sort((a,b) => b-a);
-
-              // 2 beban terbesar 100%
-              if (allLoads[0]) groupEst += allLoads[0];
-              if (allLoads[1]) groupEst += allLoads[1];
-
-              // Lebihan 25%
-              if (allLoads.length > 2) {
-                const baki = allLoads.slice(2).reduce((s,x)=>s+x,0);
-                groupEst += baki * 0.25;
-              }
-              break;
-
-            case 'water_heater_controlled':
-            case 'floor_heater':
-            case 'space_heater':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              groupEst = groupMax;
-              break;
-            case 'final_circuit_ring':
-            case 'final_circuit_radial':
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              const sortCir = [...group].map(l => (l.qty * l.P) / V).sort((a, b) => b - a);
-              if (sortCir[0]) groupEst += sortCir[0];
-              if (sortCir.length > 1) {
-                const others = sortCir.slice(1).reduce((s, x) => s + x, 0);
-                groupEst += others * 0.4;
-              }
-              break;  
-            case 'other_sockets':
-              // Untuk Soket Alir Keluar, gunakan nilai Ampere terus (tidak perlu bahagi dengan voltan)
-              let totalSockets = 0;
-              group.forEach(l => {
-                totalSockets += l.qty;
-              });
-
-              console.log("Total sockets:", totalSockets);
-
-              // Untuk 23 soket: 4 litar 2 soket + 5 litar 3 soket
-              let circuits2Socket, circuits3Socket;
-              
-              if (totalSockets <= 2) {
-                circuits2Socket = 1;
-                circuits3Socket = 0;
-              } else {
-                // Optimize untuk dapatkan kombinasi terbaik 2 soket dan 3 soket
-                circuits3Socket = Math.floor((totalSockets - 1) / 3);
-                circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
-                
-                // Pastikan jumlah soket betul
-                while (circuits2Socket * 2 + circuits3Socket * 3 < totalSockets) {
-                  circuits3Socket++;
-                  circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
-                }
-              }
-
-              // Kira arus maksimum
-              groupMax = (circuits2Socket * 20) + (circuits3Socket * 32);
-
-              // Kira arus anggaran: 100% litar terbesar + 40% litar selebihnya
-              const circuitValues = [];
-              
-              // Tambah litar 2 soket
-              for (let i = 0; i < circuits2Socket; i++) {
-                circuitValues.push(20);
-              }
-              
-              // Tambah litar 3 soket
-              for (let i = 0; i < circuits3Socket; i++) {
-                circuitValues.push(32);
-              }
-              
-              if (circuitValues.length > 0) {
-                const sortedCircuits = [...circuitValues].sort((a, b) => b - a);
-                groupEst = sortedCircuits[0]; // 100% litar terbesar
-                
-                if (sortedCircuits.length > 1) {
-                  const remainingCircuits = sortedCircuits.slice(1).reduce((sum, circuit) => sum + circuit, 0);
-                  groupEst += remainingCircuits * 0.4; // 40% litar selebihnya
-                }
-              }
-
-              console.log("Circuits 2Socket:", circuits2Socket, "Circuits 3Socket:", circuits3Socket);
-              console.log("Group Max:", groupMax, "Group Est:", groupEst);
-              break;
-            default:
-              groupMax = group.reduce((s, l) => s + (l.qty * l.P) / V, 0);
-              groupEst = groupMax;
-          }
-
-          totalMax += groupMax;
-          totalEst += groupEst;
-
-          rows += `<tr>
-            <td>${labelType(type)}</td>
-            <td style="text-align:center">${groupMax.toFixed(2)} A</td>
-            <td style="text-align:center">${groupEst.toFixed(2)} A</td>
-          </tr>`;
-        }
-
-        resultsDiv.innerHTML = `
-          <h3>Keputusan</h3>
-          <table>
-            <thead>
-              <tr><th>Jenis Beban</th><th>Arus Maksimum (A)</th><th>Arus Anggaran (A)</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-            <tfoot>
-              <tr>
-                <td style="text-align:center"><strong>Jumlah</strong></td>
-                <td style="text-align:center"><strong>${totalMax.toFixed(2)} A</strong></td>
-                <td style="text-align:center"><strong>${totalEst.toFixed(2)} A</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        `;
-      }
-
-      function labelType(type) {
-        switch (type) {
-          case 'lighting': return 'Lampu (Filamen)';
-          case 'fluorescent': return 'Lampu (Kalimantang)';
-          case 'ceiling_fan': return 'Kipas Siling';
-          case 'aircond': return 'Penghawa Dingin (A/C)';
-          case 'heating_power': return 'Pemanasan dan Kuasa';
-          case 'cooking': return 'Perkakas Memasak';
-          case 'water_heater': return 'Pemanas Air (Segera)';
-          case 'water_heater_controlled': return 'Pemanas Air (Kawalan Suhu)';
-          case 'floor_heater': return 'Pemanas Lantai';
-          case 'space_heater': return 'Pemanas Ruang';
-          case 'final_circuit_ring': return 'Soket Alir Keluar (Gelang)';
-          case 'final_circuit_radial': return 'Soket Alir Keluar (Jejari)';
-          case 'other_sockets': return 'Soket Alir Keluar (selain 9 peralatan khas)';
-          default: return type;
-        }
-      }
-    });
-  </script>
-</body>
+  <body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+  </body>
 </html>
 
+import React, { useState } from 'react';
+import { Plus, Trash2, RotateCcw, Zap, Calculator as CalculatorIcon } from 'lucide-react';
+import { LoadItem, LoadType, CalculationResult } from '../types';
+import { LOAD_LABELS, DEFAULT_VOLTAGE } from '../constants';
+import { calculateDiversity } from '../utils/calculator';
 
+const Calculator: React.FC = () => {
+  const [loads, setLoads] = useState<LoadItem[]>([
+    { id: '1', type: LoadType.LIGHTING, qty: 1, power: 60 }
+  ]);
+  const [voltage] = useState(DEFAULT_VOLTAGE);
+  const [result, setResult] = useState<CalculationResult | null>(null);
 
+  const addLoad = () => {
+    const newId = Math.random().toString(36).substr(2, 9);
+    setLoads([...loads, { id: newId, type: LoadType.LIGHTING, qty: 1, power: 60 }]);
+    setResult(null); // Reset results to ensure user presses Calculate again
+  };
 
+  const removeLoad = (id: string) => {
+    if (loads.length > 1) {
+      setLoads(loads.filter(l => l.id !== id));
+      setResult(null); // Reset results
+    } else {
+      alert("Sekurang-kurangnya satu beban perlu ada.");
+    }
+  };
 
+  const updateLoad = (id: string, field: keyof LoadItem, value: any) => {
+    setLoads(loads.map(l => l.id === id ? { ...l, [field]: value } : l));
+    setResult(null); // Reset results so old calculation doesn't persist with new data
+  };
 
+  const handleCalculate = () => {
+    const calculated = calculateDiversity(loads, voltage);
+    setResult(calculated);
+    
+    // Smooth scroll to results
+    setTimeout(() => {
+      const element = document.getElementById('results-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
 
+  const handleReset = () => {
+    setLoads([{ id: '1', type: LoadType.LIGHTING, qty: 1, power: 60 }]);
+    setResult(null);
+  };
 
+  return (
+    <div className="space-y-8">
+      
+      {/* Input Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+          <div>
+             <h2 className="text-xl font-bold text-slate-800">Senarai Beban</h2>
+             <p className="text-sm text-slate-500">Voltan Sistem: {voltage}V</p>
+          </div>
+          <button 
+            onClick={handleReset}
+            className="text-slate-400 hover:text-red-500 transition-colors p-2"
+            title="Reset Semula"
+          >
+            <RotateCcw size={18} />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          {loads.map((load, index) => (
+            <div key={load.id} className="relative bg-slate-50 p-4 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors">
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                {index + 1}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div className="md:col-span-5">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Jenis Beban</label>
+                  <select 
+                    value={load.type}
+                    onChange={(e) => updateLoad(load.id, 'type', e.target.value)}
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                  >
+                    {Object.entries(LOAD_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
 
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Bilangan</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={load.qty}
+                    onChange={(e) => updateLoad(load.id, 'qty', parseInt(e.target.value) || 0)}
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                    {load.type === LoadType.OTHER_SOCKETS ? 'Ampere (A)' : 'Kuasa (W)'}
+                  </label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    value={load.power}
+                    onChange={(e) => updateLoad(load.id, 'power', parseFloat(e.target.value) || 0)}
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex justify-end">
+                  <button 
+                    onClick={() => removeLoad(load.id)}
+                    className="text-red-500 hover:bg-red-50 p-2.5 rounded-md transition-colors w-full md:w-auto flex justify-center"
+                    disabled={loads.length === 1}
+                    title="Padam Beban"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
+            <button 
+              onClick={addLoad}
+              className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium"
+            >
+              <Plus size={20} />
+              Tambah Beban
+            </button>
+            <button 
+              onClick={handleCalculate}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-bold text-lg"
+            >
+              <CalculatorIcon size={20} />
+              Kira
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Results Section - Only shows when result is not null */}
+      {result && (
+        <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
+            <Zap className="text-yellow-400" />
+            <h2 className="text-xl font-bold">Keputusan Pengiraan</h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4">Jenis Beban</th>
+                  <th className="px-6 py-4 text-right">Arus Maksimum (A)</th>
+                  <th className="px-6 py-4 text-right bg-blue-50 text-blue-900">Arus Anggaran (A)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {result.rows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-800">{row.label}</td>
+                    <td className="px-6 py-4 text-right font-mono text-slate-600">{row.maxCurrent.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50">{row.estCurrent.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-slate-100 font-bold border-t border-slate-200 text-base">
+                <tr>
+                  <td className="px-6 py-4 text-slate-800">JUMLAH KESELURUHAN</td>
+                  <td className="px-6 py-4 text-right text-slate-800">{result.totalMax.toFixed(2)} A</td>
+                  <td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-blue-900 text-sm">
+        <h3 className="font-bold mb-2">Panduan Penggunaan:</h3>
+        <ul className="list-disc list-inside space-y-1 text-blue-800/80">
+          <li>Pilih <strong>Jenis Beban</strong> yang sesuai daripada senarai.</li>
+          <li>Masukkan <strong>Kuasa (Watt)</strong>. Untuk soket, masukkan nilai dalam <strong>Ampere (A)</strong>.</li>
+          <li>Tekan butang <strong>Tambah Beban</strong> untuk menambah peralatan lain.</li>
+          <li>Tekan butang <strong>Kira</strong> untuk mendapatkan keputusan pengiraan.</li>
+          <li>Bagi "Soket Alir Keluar (Lain-lain)", kalkulator akan mengoptimumkan litar 20A dan 32A secara automatik.</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default Calculator;
+
+    
+import React from 'react';
+
+const Notes: React.FC = () => {
+  const tableData = [
+    { type: "Lampu (Filamen)", max: "Bilangan Beban × Kuasa / 230V", est: "66% daripada jumlah arus maksimum" },
+    { type: "Lampu (Kalimantang)", max: "Bilangan Beban × Kuasa × 1.8 / 230V", est: "66% daripada jumlah arus maksimum" },
+    { type: "Kipas Siling", max: "Bilangan Beban × Kuasa / 230V x 0.85", est: "66% daripada jumlah arus maksimum" },
+    { type: "Pemanasan dan Kuasa", max: "Bilangan Beban × Kuasa / 230V", est: "100% sehingga 10A + 50% selebihnya" },
+    { type: "Pemasak", max: "Bilangan Beban × Kuasa / 230V", est: "10A + 30% beban penuh + 5A aux" },
+    { type: "Pemanas Air (Segera)", max: "Bilangan Beban × Kuasa / 230V", est: "100% 2 beban terbesar + 25% selebihnya" },
+    { type: "Pemanas Air (Laras Suhu)", max: "Bilangan Beban × Kuasa / 230V", est: "100% (Tiada Faktor Kepelbagaian)" },
+    { type: "Pemanas Lantai/Ruang", max: "Bilangan Beban × Kuasa / 230V", est: "100% (Tiada Faktor Kepelbagaian)" },
+    { type: "Soket Alir Keluar (Gelang/Jejari)", max: "Bilangan Beban × Kuasa / 230V", est: "100% litar terbesar + 40% selebihnya" },
+    { type: "Soket Lain-lain", max: "Gabungan litar 20A & 32A", est: "100% litar terbesar + 40% selebihnya" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50">
+          <h2 className="text-xl font-bold text-slate-800">Formula Faktor Kepelbagaian</h2>
+          <p className="text-slate-500 text-sm mt-1">Rujukan pantas pengiraan mengikut jenis beban</p>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-blue-50 text-blue-900 uppercase font-semibold">
+              <tr>
+                <th className="px-6 py-4 rounded-tl-lg">Jenis Beban</th>
+                <th className="px-6 py-4">Arus Maksimum</th>
+                <th className="px-6 py-4 rounded-tr-lg">Arus Anggaran (Diversity)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {tableData.map((row, index) => (
+                <tr key={index} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-slate-900">{row.type}</td>
+                  <td className="px-6 py-4 text-slate-600">{row.max}</td>
+                  <td className="px-6 py-4 text-slate-600">{row.est}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Notes;
+
+    
+import React, { useState } from 'react';
+import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+
+interface Question {
+  id: number;
+  text: string;
+  options: { value: string; label: string }[];
+  correctAnswer: string;
+  explanation: string;
+}
+
+const questions: Question[] = [
+  {
+    id: 1,
+    text: "Apakah faktor kepelbagaian untuk lampu filamen?",
+    options: [
+      { value: 'a', label: '100% arus maksimum' },
+      { value: 'b', label: '66% daripada arus maksimum' },
+      { value: 'c', label: '50% daripada arus maksimum' },
+      { value: 'd', label: '75% daripada arus maksimum' }
+    ],
+    correctAnswer: 'b',
+    explanation: "Mengikut MS 1979, faktor kepelbagaian yang dibenarkan untuk lampu filamen ialah 66% daripada jumlah arus beban penuh."
+  },
+  {
+    id: 2,
+    text: "Bagaimana pengiraan arus anggaran untuk perkakas memasak?",
+    options: [
+      { value: 'a', label: '100% arus maksimum' },
+      { value: 'b', label: '10A + 30% beban penuh + 5A suis' },
+      { value: 'c', label: '66% arus maksimum' },
+      { value: 'd', label: '50% arus maksimum' }
+    ],
+    correctAnswer: 'b',
+    explanation: "Untuk perkakas memasak, formula piawai ialah 10 Ampere pertama + 30% daripada baki arus beban penuh + 5 Ampere jika ada soket alir keluar pada unit kawalan."
+  },
+  {
+    id: 3,
+    text: "Untuk pemanas air dengan kawalan laras suhu, apakah faktor kepelbagaian yang dibenarkan?",
+    options: [
+      { value: 'a', label: '66% arus maksimum' },
+      { value: 'b', label: '50% arus maksimum' },
+      { value: 'c', label: '100% arus maksimum (tiada)' },
+      { value: 'd', label: '75% arus maksimum' }
+    ],
+    correctAnswer: 'c',
+    explanation: "Pemanas air yang dikawal laras suhu tidak dibenarkan sebarang faktor kepelbagaian. Ia mesti dikira pada 100% beban penuh."
+  }
+];
+
+const Quiz: React.FC = () => {
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [showResult, setShowResult] = useState<Record<number, boolean>>({});
+
+  const handleCheck = (qId: number) => {
+    if (!answers[qId]) return;
+    setShowResult(prev => ({ ...prev, [qId]: true }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Uji Kefahaman Anda</h2>
+        <p className="text-slate-500 mb-6">Jawab soalan berikut berkaitan piawaian MS 1979</p>
+        <div className="flex justify-center mb-4">
+           <img 
+             src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" 
+             alt="Example Diagram" 
+             className="rounded-lg shadow-md max-h-64 object-cover"
+           />
+        </div>
+      </div>
+
+      {questions.map((q) => {
+        const isAnswered = showResult[q.id];
+        const isCorrect = answers[q.id] === q.correctAnswer;
+        
+        return (
+          <div key={q.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-6">
+              <div className="flex gap-3 mb-4">
+                 <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+                   {q.id}
+                 </div>
+                 <h3 className="text-lg font-medium text-slate-900 mt-0.5">{q.text}</h3>
+              </div>
+              
+              <div className="space-y-3 pl-11">
+                {q.options.map((opt) => (
+                  <label 
+                    key={opt.value} 
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      answers[q.id] === opt.value 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-slate-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <input 
+                      type="radio" 
+                      name={`q-${q.id}`} 
+                      value={opt.value}
+                      checked={answers[q.id] === opt.value}
+                      onChange={() => !isAnswered && setAnswers(prev => ({ ...prev, [q.id]: opt.value }))}
+                      disabled={isAnswered}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-700">{opt.label}</span>
+                  </label>
+                ))}
+
+                {!isAnswered ? (
+                  <button 
+                    onClick={() => handleCheck(q.id)}
+                    disabled={!answers[q.id]}
+                    className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Semak Jawapan
+                  </button>
+                ) : (
+                  <div className={`mt-4 p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex items-start gap-3">
+                      {isCorrect ? <CheckCircle2 className="text-green-600 shrink-0" /> : <XCircle className="text-red-600 shrink-0" />}
+                      <div>
+                        <p className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                          {isCorrect ? 'Jawapan Tepat!' : 'Kurang Tepat.'}
+                        </p>
+                        <p className="text-slate-700 text-sm mt-1">{q.explanation}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default Quiz;
 
