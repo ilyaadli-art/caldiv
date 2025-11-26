@@ -116,7 +116,14 @@
     const calculateDiversity = (loads, voltage = DEFAULT_VOLTAGE) => {
       const groups = {};
       
-      loads.forEach(l => {
+      // Filter out invalid loads (empty type, qty 0/empty, power empty)
+      const validLoads = loads.filter(l => 
+        l.type !== '' && 
+        l.qty !== '' && l.qty > 0 &&
+        l.power !== ''
+      );
+
+      validLoads.forEach(l => {
         if (!groups[l.type]) groups[l.type] = [];
         groups[l.type].push(l);
       });
@@ -131,7 +138,7 @@
         let groupEst = 0;
 
         const sumMax = (factor = 1, divisor = voltage) => 
-          group.reduce((s, l) => s + (l.qty * l.power * factor) / divisor, 0);
+          group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
 
         switch (type) {
           case LoadType.LIGHTING:
@@ -143,11 +150,11 @@
             groupEst = groupMax * 0.66;
             break;
           case LoadType.CEILING_FAN:
-            groupMax = group.reduce((s, l) => s + (l.qty * l.power) / (voltage * 0.85), 0);
+            groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
             groupEst = groupMax * 0.66;
             break;
           case LoadType.AIRCOND:
-            groupMax = group.reduce((s, l) => s + (l.qty * l.power) / (voltage * 0.85), 0);
+            groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
             groupEst = groupMax;
             break;
           case LoadType.HEATING_POWER:
@@ -165,7 +172,7 @@
             groupMax = sumMax(1, voltage);
             const allHeaters = [];
             group.forEach(l => {
-              for (let i = 0; i < l.qty; i++) allHeaters.push(l.power / voltage);
+              for (let i = 0; i < Number(l.qty); i++) allHeaters.push(Number(l.power) / voltage);
             });
             allHeaters.sort((a, b) => b - a);
             if (allHeaters.length > 0) groupEst += allHeaters[0];
@@ -184,7 +191,7 @@
           case LoadType.FINAL_CIRCUIT_RING:
           case LoadType.FINAL_CIRCUIT_RADIAL:
             groupMax = sumMax(1, voltage);
-            const circuits = group.map(l => (l.qty * l.power) / voltage).sort((a, b) => b - a);
+            const circuits = group.map(l => (Number(l.qty) * Number(l.power)) / voltage).sort((a, b) => b - a);
             if (circuits.length > 0) groupEst += circuits[0];
             if (circuits.length > 1) {
               const rest = circuits.slice(1).reduce((a, b) => a + b, 0);
@@ -193,7 +200,7 @@
             break;
           case LoadType.OTHER_SOCKETS:
             let totalSockets = 0;
-            group.forEach(l => totalSockets += l.qty);
+            group.forEach(l => totalSockets += Number(l.qty));
             let circuits2Socket = 0;
             let circuits3Socket = 0;
             if (totalSockets <= 2) {
@@ -337,16 +344,19 @@
     };
 
     const Calculator = () => {
+      // Changed initial state to empty strings to allow "unselected" state
       const [loads, setLoads] = useState([
-        { id: '1', type: LoadType.LIGHTING, qty: 1, power: 60 }
+        { id: '1', type: '', qty: '', power: '' }
       ]);
       const [voltage] = useState(DEFAULT_VOLTAGE);
       const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
 
       const addLoad = () => {
         const newId = Math.random().toString(36).substr(2, 9);
-        setLoads([...loads, { id: newId, type: LoadType.LIGHTING, qty: 1, power: 60 }]);
+        setLoads([...loads, { id: newId, type: '', qty: '', power: '' }]);
         setResult(null); 
+        setError(null);
       };
 
       const removeLoad = (id) => {
@@ -361,11 +371,29 @@
       const updateLoad = (id, field, value) => {
         setLoads(loads.map(l => l.id === id ? { ...l, [field]: value } : l));
         setResult(null); 
+        setError(null);
       };
 
       const handleCalculate = () => {
+        // Validation: Check for empty fields
+        const hasEmptyFields = loads.some(l => l.type === '' || l.qty === '' || l.power === '');
+        
+        if (hasEmptyFields) {
+          setError("Sila pastikan semua ruangan (Jenis Beban, Bilangan, Kuasa) telah diisi.");
+          return;
+        }
+
+        // Validation: Check for zero values (though input type number usually handles negative)
+        const hasZeroValues = loads.some(l => Number(l.qty) <= 0);
+        if (hasZeroValues) {
+          setError("Bilangan beban mesti lebih daripada 0.");
+          return;
+        }
+
         const calculated = calculateDiversity(loads, voltage);
         setResult(calculated);
+        setError(null);
+        
         setTimeout(() => {
           const element = document.getElementById('results-section');
           if (element) {
@@ -375,8 +403,9 @@
       };
 
       const handleReset = () => {
-        setLoads([{ id: '1', type: LoadType.LIGHTING, qty: 1, power: 60 }]);
+        setLoads([{ id: '1', type: '', qty: '', power: '' }]);
         setResult(null);
+        setError(null);
       };
 
       return (
@@ -409,10 +438,11 @@
                       <select 
                         value={load.type}
                         onChange={(e) => updateLoad(load.id, 'type', e.target.value)}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                        className={`w-full p-2.5 bg-white border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm ${load.type === '' ? 'text-slate-400 border-slate-300' : 'text-slate-900 border-slate-300'}`}
                       >
+                        <option value="" disabled>Pilih Jenis Beban</option>
                         {Object.entries(LOAD_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
+                          <option key={key} value={key} className="text-slate-900">{label}</option>
                         ))}
                       </select>
                     </div>
@@ -422,9 +452,10 @@
                       <input 
                         type="number" 
                         min="1"
+                        placeholder="0"
                         value={load.qty}
-                        onChange={(e) => updateLoad(load.id, 'qty', parseInt(e.target.value) || 0)}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                        onChange={(e) => updateLoad(load.id, 'qty', e.target.value === '' ? '' : parseInt(e.target.value))}
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
                       />
                     </div>
 
@@ -435,9 +466,10 @@
                       <input 
                         type="number" 
                         min="0"
+                        placeholder="0"
                         value={load.power}
-                        onChange={(e) => updateLoad(load.id, 'power', parseFloat(e.target.value) || 0)}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                        onChange={(e) => updateLoad(load.id, 'power', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
                       />
                     </div>
 
@@ -454,6 +486,13 @@
                   </div>
                 </div>
               ))}
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+                  <Icons.AlertCircle size={18} />
+                  <span>{error}</span>
+                </div>
+              )}
 
               <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
                 <button 
