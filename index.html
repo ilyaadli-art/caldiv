@@ -191,7 +191,7 @@
           case LoadType.FINAL_CIRCUIT_RING:
           case LoadType.FINAL_CIRCUIT_RADIAL:
             groupMax = sumMax(1, voltage);
-            const circuits = group.map(l => (Number(l.qty) * Number(l.power)) / voltage).sort((a, b) => b - a);
+            const circuits = group.map(l => (Number(l.qty) * Number(l.power)).sort((a, b) => b - a);
             if (circuits.length > 0) groupEst += circuits[0];
             if (circuits.length > 1) {
               const rest = circuits.slice(1).reduce((a, b) => a + b, 0);
@@ -718,5 +718,6 @@
   </script>
 </body>
 </html>
+
 
 
