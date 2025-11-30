@@ -25,6 +25,18 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+    .animate-slide-up { animation: slideUp 0.5s ease-out; }
   </style>
 <script type="importmap">
 {
@@ -32,18 +44,18 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
   }
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-800">
-  <div id="root"></div>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+  <div id="root" class="flex flex-col min-h-screen"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // --- ICONS (Inline SVGs to avoid dependency issues) ---
+    // --- 1. ICONS (Replicating Lucide-React) ---
     const Icons = {
       Calculator: ({ size = 24, className = "" }) => (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
@@ -77,7 +89,7 @@
       )
     };
 
-    // --- TYPES & CONSTANTS ---
+    // --- 2. TYPES & CONSTANTS ---
     const LoadType = {
       LIGHTING: 'lighting',
       FLUORESCENT: 'fluorescent',
@@ -112,17 +124,18 @@
 
     const DEFAULT_VOLTAGE = 230;
 
-    // --- CALCULATION LOGIC ---
+    // --- 3. CALCULATION SERVICE ---
     const calculateDiversity = (loads, voltage = DEFAULT_VOLTAGE) => {
       const groups = {};
       
-      // Filter out invalid loads (empty type, qty 0/empty, power empty)
+      // Filter valid loads
       const validLoads = loads.filter(l => 
         l.type !== '' && 
-        l.qty !== '' && l.qty > 0 &&
-        l.power !== ''
+        l.qty !== '' && Number(l.qty) > 0 &&
+        l.power !== '' && Number(l.power) >= 0
       );
 
+      // Group loads by type
       validLoads.forEach(l => {
         if (!groups[l.type]) groups[l.type] = [];
         groups[l.type].push(l);
@@ -134,78 +147,121 @@
 
       for (const [typeStr, group] of Object.entries(groups)) {
         const type = typeStr;
+        if (!group) continue;
+
         let groupMax = 0;
         let groupEst = 0;
 
-        const sumMax = (factor = 1, divisor = voltage) => 
-          group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
+        // Helper to sum max current based on Watts
+        const sumMaxWatts = (factor = 1, divisor = voltage) => 
+          group.reduce((s, l) => s + (l.qty * l.power * factor) / divisor, 0);
+        
+        // Helper to sum max current based on Amps (Direct input)
+        const sumMaxAmps = () => 
+          group.reduce((s, l) => s + (l.qty * l.power), 0);
+
+        // Expand multiple quantity entries into individual circuit ratings for sorting logic
+        const expandCircuits = (isAmps = true) => {
+          const circuits = [];
+          group.forEach(l => {
+            const rating = isAmps ? l.power : (l.power / voltage);
+            for(let i = 0; i < l.qty; i++) circuits.push(rating);
+          });
+          return circuits.sort((a, b) => b - a); // Descending
+        };
 
         switch (type) {
           case LoadType.LIGHTING:
-            groupMax = sumMax(1, voltage);
+            groupMax = sumMaxWatts(1, voltage);
             groupEst = groupMax * 0.66;
             break;
+
           case LoadType.FLUORESCENT:
-            groupMax = sumMax(1.8, voltage);
+            // 1.8 multiplier for fluorescent startup/ballast
+            groupMax = sumMaxWatts(1.8, voltage);
             groupEst = groupMax * 0.66;
             break;
+
           case LoadType.CEILING_FAN:
-            groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
+            // 0.85 power factor approx
+            groupMax = group.reduce((s, l) => s + (l.qty * l.power) / (voltage * 0.85), 0);
             groupEst = groupMax * 0.66;
             break;
+
           case LoadType.AIRCOND:
-            groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
-            groupEst = groupMax;
+            groupMax = group.reduce((s, l) => s + (l.qty * l.power) / (voltage * 0.85), 0);
+            groupEst = groupMax; // No diversity
             break;
+
           case LoadType.HEATING_POWER:
-            groupMax = sumMax(1, voltage);
+            groupMax = sumMaxWatts(1, voltage);
+            // 100% up to 10A + 50% remainder
             groupEst = groupMax <= 10 ? groupMax : 10 + (groupMax - 10) * 0.5;
             break;
+
           case LoadType.COOKING:
-            groupMax = sumMax(1, voltage);
+            groupMax = sumMaxWatts(1, voltage);
+            // 10A + 30% remainder + 5A auxiliary
             const baseCooking = 10;
             const aux = 5;
             const remainder = Math.max(0, groupMax - baseCooking);
             groupEst = baseCooking + (remainder * 0.3) + aux;
             break;
-          case LoadType.WATER_HEATER:
-            groupMax = sumMax(1, voltage);
-            const allHeaters = [];
-            group.forEach(l => {
-              for (let i = 0; i < Number(l.qty); i++) allHeaters.push(Number(l.power) / voltage);
-            });
-            allHeaters.sort((a, b) => b - a);
-            if (allHeaters.length > 0) groupEst += allHeaters[0];
-            if (allHeaters.length > 1) groupEst += allHeaters[1];
-            if (allHeaters.length > 2) {
-              const rest = allHeaters.slice(2).reduce((a, b) => a + b, 0);
-              groupEst += rest * 0.25;
+
+          case LoadType.WATER_HEATER: // Instant
+            groupMax = sumMaxWatts(1, voltage);
+            const heaters = expandCircuits(false); // input is watts
+            if (heaters.length > 0) groupEst += heaters[0]; // 1st: 100%
+            if (heaters.length > 1) groupEst += heaters[1]; // 2nd: 100%
+            if (heaters.length > 2) {
+              const rest = heaters.slice(2).reduce((a, b) => a + b, 0);
+              groupEst += rest * 0.25; // Remainder: 25%
             }
             break;
+
           case LoadType.WATER_HEATER_CONTROLLED:
           case LoadType.FLOOR_HEATER:
           case LoadType.SPACE_HEATER:
-            groupMax = sumMax(1, voltage);
-            groupEst = groupMax;
+            groupMax = sumMaxWatts(1, voltage);
+            groupEst = groupMax; // No diversity
             break;
+
+          /* ---------------------------------------------------------
+             UPDATED LOGIC: Ring and Radial Circuits
+             1. Max Current = Quantity x Power (Amps)
+             2. Estimated = 100% largest circuit + 40% remainder
+          --------------------------------------------------------- */
           case LoadType.FINAL_CIRCUIT_RING:
-          case LoadType.FINAL_CIRCUIT_RADIAL:
-            groupMax = sumMax(1,);
-            const circuits = group.map(l => (Number(l.qty) * Number(l.power)) ).sort((a, b) => b - a);
-            if (circuits.length > 0) groupEst += circuits[0];
-            if (circuits.length > 1) {
-              const rest = circuits.slice(1).reduce((a, b) => a + b, 0);
-              groupEst += rest * 0.4;
+          case LoadType.FINAL_CIRCUIT_RADIAL: {
+            // Max is simple sum of Amps
+            groupMax = sumMaxAmps();
+            
+            // Diversity Calculation
+            const circuits = expandCircuits(true); // Input is Amps
+            
+            if (circuits.length > 0) {
+              // 100% of the largest
+              groupEst += circuits[0];
+              
+              // 40% of the rest
+              if (circuits.length > 1) {
+                const rest = circuits.slice(1).reduce((a, b) => a + b, 0);
+                groupEst += rest * 0.4;
+              }
             }
             break;
+          }
+
           case LoadType.OTHER_SOCKETS:
+            // Complex legacy logic for standard sockets based on MS 1979 optimization
             let totalSockets = 0;
-            group.forEach(l => totalSockets += Number(l.qty));
+            group.forEach(l => totalSockets += l.qty);
+            
             let circuits2Socket = 0;
             let circuits3Socket = 0;
+
             if (totalSockets <= 2) {
               circuits2Socket = 1;
-              circuits3Socket = 0;
             } else {
                circuits3Socket = Math.floor((totalSockets - 1) / 3);
                circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
@@ -214,17 +270,21 @@
                  circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
                }
             }
+            
             groupMax = (circuits2Socket * 20) + (circuits3Socket * 32);
+            
             const circuitAmps = [];
             for(let i=0; i<circuits2Socket; i++) circuitAmps.push(20);
             for(let i=0; i<circuits3Socket; i++) circuitAmps.push(32);
             circuitAmps.sort((a, b) => b - a);
+            
             if (circuitAmps.length > 0) {
               groupEst = circuitAmps[0];
               const rest = circuitAmps.slice(1).reduce((a, b) => a + b, 0);
               groupEst += rest * 0.4;
             }
             break;
+          
           default:
             groupMax = 0;
             groupEst = 0;
@@ -243,59 +303,48 @@
       return { rows, totalMax, totalEst };
     };
 
-    // --- COMPONENTS ---
+    // --- 4. COMPONENTS ---
 
+    // Header Component
     const Header = ({ activeTab, setActiveTab }) => {
+      const navItems = [
+        { id: 'notes', label: 'Nota', icon: Icons.BookOpen },
+        { id: 'calc', label: 'Pengiraan', icon: Icons.Calculator },
+        { id: 'quiz', label: 'Soalan', icon: Icons.HelpCircle },
+      ];
+
       return (
-        <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg">
-          <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">Kalkulator Faktor Kepelbagaian</h1>
-            <p className="text-blue-100 text-sm md:text-base">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
+        <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg sticky top-0 z-50">
+          <div className="max-w-5xl mx-auto px-4 py-6 md:py-8 text-center">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">Kalkulator Faktor Kepelbagaian</h1>
+            <p className="text-blue-100 text-xs md:text-sm font-light">
+              Berdasarkan piawaian elektrik Malaysia (MS 1979)
+            </p>
           </div>
           
-          <div className="bg-blue-800/50 backdrop-blur-sm">
-            <nav className="max-w-4xl mx-auto px-4 flex justify-center space-x-2 py-3">
-              <button
-                onClick={() => setActiveTab('notes')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-medium ${
-                  activeTab === 'notes' 
-                    ? 'bg-white text-blue-900 shadow-md' 
-                    : 'text-blue-100 hover:bg-blue-700'
-                }`}
-              >
-                <Icons.BookOpen size={18} />
-                <span>Nota</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('calc')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-medium ${
-                  activeTab === 'calc' 
-                    ? 'bg-white text-blue-900 shadow-md' 
-                    : 'text-blue-100 hover:bg-blue-700'
-                }`}
-              >
-                <Icons.Calculator size={18} />
-                <span>Pengiraan</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('quiz')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-medium ${
-                  activeTab === 'quiz' 
-                    ? 'bg-white text-blue-900 shadow-md' 
-                    : 'text-blue-100 hover:bg-blue-700'
-                }`}
-              >
-                <Icons.HelpCircle size={18} />
-                <span>Soalan</span>
-              </button>
+          <div className="bg-blue-800/50 backdrop-blur-sm border-t border-blue-600/30">
+            <nav className="max-w-5xl mx-auto px-4 flex justify-center space-x-2 py-3">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all text-sm font-medium ${
+                    activeTab === item.id
+                      ? 'bg-white text-blue-900 shadow-md transform scale-105' 
+                      : 'text-blue-100 hover:bg-blue-700/80 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={16} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
             </nav>
           </div>
         </header>
       );
     };
 
+    // Notes Component
     const Notes = () => {
       const tableData = [
         { type: "Lampu (Filamen)", max: "Bilangan Beban × Kuasa / 230V", est: "66% daripada jumlah arus maksimum" },
@@ -306,12 +355,11 @@
         { type: "Pemasak", max: "Bilangan Beban × Kuasa / 230V", est: "10A + 30% beban penuh + 5A aux" },
         { type: "Pemanas Air (Segera)", max: "Bilangan Beban × Kuasa / 230V", est: "100% 2 beban terbesar + 25% selebihnya" },
         { type: "Pemanas Air (Laras Suhu)", max: "Bilangan Beban × Kuasa / 230V", est: "100% (Tiada Faktor Kepelbagaian)" },
-        { type: "Pemanas Lantai/Ruang", max: "Bilangan Beban × Kuasa / 230V", est: "100% (Tiada Faktor Kepelbagaian)" },
-        { type: "Soket Alir Keluar (Gelang/Jejari)", max: "Bilangan Beban × Kuasa", est: "100% litar terbesar + 40% selebihnya" },
-       ];
+        { type: "Soket Alir Keluar (Gelang/Jejari)", max: "Bilangan Beban × Kuasa (A)", est: "100% litar terbesar + 40% selebihnya" },
+      ];
 
       return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-slate-50">
               <h2 className="text-xl font-bold text-slate-800">Formula Faktor Kepelbagaian</h2>
@@ -320,7 +368,7 @@
             
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-blue-50 text-blue-900 uppercase font-semibold">
+                <thead className="bg-blue-50 text-blue-900 uppercase font-semibold text-xs tracking-wider">
                   <tr>
                     <th className="px-6 py-4 rounded-tl-lg">Jenis Beban</th>
                     <th className="px-6 py-4">Arus Maksimum</th>
@@ -331,7 +379,7 @@
                   {tableData.map((row, index) => (
                     <tr key={index} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{row.type}</td>
-                      <td className="px-6 py-4 text-slate-600">{row.max}</td>
+                      <td className="px-6 py-4 text-slate-600 font-mono text-xs">{row.max}</td>
                       <td className="px-6 py-4 text-slate-600">{row.est}</td>
                     </tr>
                   ))}
@@ -343,227 +391,7 @@
       );
     };
 
-    const Calculator = () => {
-      // Changed initial state to empty strings to allow "unselected" state
-      const [loads, setLoads] = useState([
-        { id: '1', type: '', qty: '', power: '' }
-      ]);
-      const [voltage] = useState(DEFAULT_VOLTAGE);
-      const [result, setResult] = useState(null);
-      const [error, setError] = useState(null);
-
-      const addLoad = () => {
-        const newId = Math.random().toString(36).substr(2, 9);
-        setLoads([...loads, { id: newId, type: '', qty: '', power: '' }]);
-        setResult(null); 
-        setError(null);
-      };
-
-      const removeLoad = (id) => {
-        if (loads.length > 1) {
-          setLoads(loads.filter(l => l.id !== id));
-          setResult(null);
-        } else {
-          alert("Sekurang-kurangnya satu beban perlu ada.");
-        }
-      };
-
-      const updateLoad = (id, field, value) => {
-        setLoads(loads.map(l => l.id === id ? { ...l, [field]: value } : l));
-        setResult(null); 
-        setError(null);
-      };
-
-      const handleCalculate = () => {
-        // Validation: Check for empty fields
-        const hasEmptyFields = loads.some(l => l.type === '' || l.qty === '' || l.power === '');
-        
-        if (hasEmptyFields) {
-          setError("Sila pastikan semua ruangan (Jenis Beban, Bilangan, Kuasa) telah diisi.");
-          return;
-        }
-
-        // Validation: Check for zero values (though input type number usually handles negative)
-        const hasZeroValues = loads.some(l => Number(l.qty) <= 0);
-        if (hasZeroValues) {
-          setError("Bilangan beban mesti lebih daripada 0.");
-          return;
-        }
-
-        const calculated = calculateDiversity(loads, voltage);
-        setResult(calculated);
-        setError(null);
-        
-        setTimeout(() => {
-          const element = document.getElementById('results-section');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 100);
-      };
-
-      const handleReset = () => {
-        setLoads([{ id: '1', type: '', qty: '', power: '' }]);
-        setResult(null);
-        setError(null);
-      };
-
-      return (
-        <div className="space-y-8">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <div>
-                 <h2 className="text-xl font-bold text-slate-800">Senarai Beban</h2>
-                 <p className="text-sm text-slate-500">Voltan Sistem: {voltage}V</p>
-              </div>
-              <button 
-                onClick={handleReset}
-                className="text-slate-400 hover:text-red-500 transition-colors p-2"
-                title="Reset Semula"
-              >
-                <Icons.RotateCcw size={18} />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {loads.map((load, index) => (
-                <div key={load.id} className="relative bg-slate-50 p-4 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors">
-                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                    {index + 1}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div className="md:col-span-5">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Jenis Beban</label>
-                      <select 
-                        value={load.type}
-                        onChange={(e) => updateLoad(load.id, 'type', e.target.value)}
-                        className={`w-full p-2.5 bg-white border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm ${load.type === '' ? 'text-slate-400 border-slate-300' : 'text-slate-900 border-slate-300'}`}
-                      >
-                        <option value="" disabled>Pilih Jenis Beban</option>
-                        {Object.entries(LOAD_LABELS).map(([key, label]) => (
-                          <option key={key} value={key} className="text-slate-900">{label}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Bilangan</label>
-                      <input 
-                        type="number" 
-                        min="1"
-                        placeholder="0"
-                        value={load.qty}
-                        onChange={(e) => updateLoad(load.id, 'qty', e.target.value === '' ? '' : parseInt(e.target.value))}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
-                      />
-                    </div>
-
-                    <div className="md:col-span-3">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
-                        {load.type === LoadType.OTHER_SOCKETS ? 'Ampere (A)' : 'Kuasa (W)'}
-                      </label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        placeholder="0"
-                        value={load.power}
-                        onChange={(e) => updateLoad(load.id, 'power', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2 flex justify-end">
-                      <button 
-                        onClick={() => removeLoad(load.id)}
-                        className="text-red-500 hover:bg-red-50 p-2.5 rounded-md transition-colors w-full md:w-auto flex justify-center"
-                        disabled={loads.length === 1}
-                        title="Padam Beban"
-                      >
-                        <Icons.Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
-                  <Icons.AlertCircle size={18} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
-                <button 
-                  onClick={addLoad}
-                  className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium"
-                >
-                  <Icons.Plus size={20} />
-                  Tambah Beban
-                </button>
-                <button 
-                  onClick={handleCalculate}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-bold text-lg"
-                >
-                  <Icons.Calculator size={20} />
-                  Kira
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {result && (
-            <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-              <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
-                <Icons.Zap className="text-yellow-400" size={24} />
-                <h2 className="text-xl font-bold">Keputusan Pengiraan</h2>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-4">Jenis Beban</th>
-                      <th className="px-6 py-4 text-right">Arus Maksimum (A)</th>
-                      <th className="px-6 py-4 text-right bg-blue-50 text-blue-900">Arus Anggaran (A)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {result.rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 font-medium text-slate-800">{row.label}</td>
-                        <td className="px-6 py-4 text-right font-mono text-slate-600">{row.maxCurrent.toFixed(2)}</td>
-                        <td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50">{row.estCurrent.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-100 font-bold border-t border-slate-200 text-base">
-                    <tr>
-                      <td className="px-6 py-4 text-slate-800">JUMLAH KESELURUHAN</td>
-                      <td className="px-6 py-4 text-right text-slate-800">{result.totalMax.toFixed(2)} A</td>
-                      <td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-blue-900 text-sm">
-            <h3 className="font-bold mb-2">Panduan Penggunaan:</h3>
-            <ul className="list-disc list-inside space-y-1 text-blue-800/80">
-              <li>Pilih <strong>Jenis Beban</strong> yang sesuai daripada senarai.</li>
-              <li>Masukkan <strong>Kuasa (Watt)</strong>. Untuk soket, masukkan nilai dalam <strong>Ampere (A)</strong>.</li>
-              <li>Tekan butang <strong>Tambah Beban</strong> untuk menambah peralatan lain.</li>
-              <li>Tekan butang <strong>Kira</strong> untuk mendapatkan keputusan pengiraan.</li>
-              <li>Bagi "Soket Alir Keluar (Lain-lain)", kalkulator akan mengoptimumkan litar 20A dan 32A secara automatik.</li>
-            </ul>
-          </div>
-        </div>
-      );
-    };
-
+    // Quiz Component
     const Quiz = () => {
       const [answers, setAnswers] = useState({});
       const [showResult, setShowResult] = useState({});
@@ -583,15 +411,15 @@
         },
         {
           id: 2,
-          text: "Bagaimana pengiraan arus anggaran untuk perkakas memasak?",
+          text: "Bagaimana pengiraan arus anggaran untuk litar jejari (Radial Circuit)?",
           options: [
-            { value: 'a', label: '100% arus maksimum' },
-            { value: 'b', label: '10A + 30% beban penuh + 5A suis' },
-            { value: 'c', label: '66% arus maksimum' },
-            { value: 'd', label: '50% arus maksimum' }
+            { value: 'a', label: '100% litar terbesar + 40% bakinya' },
+            { value: 'b', label: '100% semua litar' },
+            { value: 'c', label: '66% daripada jumlah arus' },
+            { value: 'd', label: '100% litar pertama + 50% bakinya' }
           ],
-          correctAnswer: 'b',
-          explanation: "Untuk perkakas memasak, formula piawai ialah 10 Ampere pertama + 30% daripada baki arus beban penuh + 5 Ampere jika ada soket alir keluar pada unit kawalan."
+          correctAnswer: 'a',
+          explanation: "Untuk litar akhir soket alir keluar (Jejari dan Gelang), pengiraannya ialah 100% permintaan arus litar terbesar ditambah 40% permintaan arus bagi setiap litar lain."
         },
         {
           id: 3,
@@ -618,11 +446,11 @@
             <h2 className="text-xl font-bold text-slate-800 mb-2">Uji Kefahaman Anda</h2>
             <p className="text-slate-500 mb-6">Jawab soalan berikut berkaitan piawaian MS 1979</p>
             <div className="flex justify-center mb-4">
-               <img 
-                 src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" 
-                 alt="Example Diagram" 
-                 className="rounded-lg shadow-md max-h-64 object-cover"
-               />
+                <img 
+                    src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" 
+                    alt="Example Diagram" 
+                    className="rounded-lg shadow-md max-h-64 object-cover"
+                />
             </div>
           </div>
 
@@ -631,13 +459,13 @@
             const isCorrect = answers[q.id] === q.correctAnswer;
             
             return (
-              <div key={q.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div key={q.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
                 <div className="p-6">
                   <div className="flex gap-3 mb-4">
-                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-                       {q.id}
-                     </div>
-                     <h3 className="text-lg font-medium text-slate-900 mt-0.5">{q.text}</h3>
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+                        {q.id}
+                      </div>
+                      <h3 className="text-lg font-medium text-slate-900 mt-0.5">{q.text}</h3>
                   </div>
                   
                   <div className="space-y-3 pl-11">
@@ -646,7 +474,7 @@
                         key={opt.value} 
                         className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                           answers[q.id] === opt.value 
-                            ? 'border-blue-500 bg-blue-50' 
+                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
                             : 'border-slate-200 hover:border-blue-300'
                         }`}
                       >
@@ -657,7 +485,7 @@
                           checked={answers[q.id] === opt.value}
                           onChange={() => !isAnswered && setAnswers(prev => ({ ...prev, [q.id]: opt.value }))}
                           disabled={isAnswered}
-                          className="text-blue-600 focus:ring-blue-500"
+                          className="text-blue-600 focus:ring-blue-500 w-4 h-4"
                         />
                         <span className="text-slate-700">{opt.label}</span>
                       </label>
@@ -693,31 +521,280 @@
       );
     };
 
+    // Calculator Component
+    const Calculator = () => {
+      const [loads, setLoads] = useState([
+        { id: '1', type: '', qty: '', power: '' }
+      ]);
+      const [voltage] = useState(DEFAULT_VOLTAGE);
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
+
+      const addLoad = () => {
+        const newId = Math.random().toString(36).substr(2, 9);
+        setLoads([...loads, { id: newId, type: '', qty: '', power: '' }]);
+        setResult(null); 
+        setError(null);
+      };
+
+      const removeLoad = (id) => {
+        if (loads.length > 1) {
+          setLoads(loads.filter(l => l.id !== id));
+          setResult(null);
+        } else {
+          setError("Sekurang-kurangnya satu beban perlu ada.");
+          setTimeout(() => setError(null), 3000);
+        }
+      };
+
+      const updateLoad = (id, field, value) => {
+        setLoads(loads.map(l => l.id === id ? { ...l, [field]: value } : l));
+        setResult(null); 
+        setError(null);
+      };
+
+      const handleCalculate = () => {
+        // Validation
+        const hasEmptyFields = loads.some(l => l.type === '' || l.qty === '' || l.power === '');
+        
+        if (hasEmptyFields) {
+          setError("Sila pastikan semua ruangan (Jenis Beban, Bilangan, Kuasa) telah diisi.");
+          return;
+        }
+
+        const hasZeroValues = loads.some(l => Number(l.qty) <= 0 || Number(l.power) < 0);
+        if (hasZeroValues) {
+          setError("Bilangan beban mesti lebih daripada 0 dan kuasa/ampere tidak boleh negatif.");
+          return;
+        }
+
+        const calculated = calculateDiversity(loads, voltage);
+        setResult(calculated);
+        setError(null);
+        
+        // Smooth scroll to results
+        setTimeout(() => {
+          const element = document.getElementById('results-section');
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      };
+
+      const handleReset = () => {
+        if(window.confirm("Adakah anda pasti mahu menetapkan semula semua data?")) {
+            setLoads([{ id: '1', type: '', qty: '', power: '' }]);
+            setResult(null);
+            setError(null);
+        }
+      };
+
+      const isSocketType = (type) => {
+        return type === LoadType.FINAL_CIRCUIT_RING || 
+               type === LoadType.FINAL_CIRCUIT_RADIAL || 
+               type === LoadType.OTHER_SOCKETS;
+      };
+
+      return (
+        <div className="space-y-8 animate-fade-in pb-12">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <div>
+                  <h2 className="text-xl font-bold text-slate-800">Senarai Beban</h2>
+                  <p className="text-sm text-slate-500">Voltan Sistem: {voltage}V</p>
+              </div>
+              <button 
+                onClick={handleReset}
+                className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all p-2"
+                title="Reset Semula"
+              >
+                <Icons.RotateCcw size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {loads.map((load, index) => (
+                <div key={load.id} className="relative bg-slate-50 p-4 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors group">
+                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-4 ring-white">
+                    {index + 1}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="md:col-span-5">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Jenis Beban</label>
+                      <div className="relative">
+                        <select 
+                            value={load.type}
+                            onChange={(e) => updateLoad(load.id, 'type', e.target.value)}
+                            className={`w-full p-2.5 bg-white border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm appearance-none cursor-pointer ${load.type === '' ? 'text-slate-400 border-slate-300' : 'text-slate-900 border-slate-300'}`}
+                        >
+                            <option value="" disabled>Pilih Jenis Beban</option>
+                            {Object.entries(LOAD_LABELS).map(([key, label]) => (
+                            <option key={key} value={key} className="text-slate-900">{label}</option>
+                            ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Bilangan (Unit/Litar)</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        placeholder="1"
+                        value={load.qty}
+                        onChange={(e) => updateLoad(load.id, 'qty', e.target.value === '' ? '' : parseInt(e.target.value))}
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
+                      />
+                    </div>
+
+                    <div className="md:col-span-3">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 flex justify-between">
+                        <span>{isSocketType(load.type) ? 'Rating (Ampere)' : 'Kuasa (Watt)'}</span>
+                      </label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        placeholder={isSocketType(load.type) ? "Contoh: 32" : "Contoh: 60"}
+                        value={load.power}
+                        onChange={(e) => updateLoad(load.id, 'power', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex justify-end">
+                      <button 
+                        onClick={() => removeLoad(load.id)}
+                        className="text-red-500 hover:bg-red-50 p-2.5 rounded-md transition-colors w-full md:w-auto flex justify-center border border-transparent hover:border-red-100"
+                        disabled={loads.length === 1}
+                        title="Padam Beban"
+                      >
+                        <Icons.Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm animate-pulse">
+                  <Icons.AlertCircle size={18} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
+                <button 
+                  onClick={addLoad}
+                  className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium group"
+                >
+                  <Icons.Plus size={20} className="group-hover:scale-110 transition-transform" />
+                  Tambah Beban
+                </button>
+                <button 
+                  onClick={handleCalculate}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-bold text-lg active:scale-95 transform duration-150"
+                >
+                  <Icons.Calculator size={20} />
+                  Kira
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {result && (
+            <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up">
+              <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
+                <div className="p-2 bg-slate-800 rounded-lg">
+                    <Icons.Zap className="text-yellow-400" size={24} />
+                </div>
+                <div>
+                    <h2 className="text-xl font-bold">Keputusan Pengiraan</h2>
+                    <p className="text-slate-400 text-sm">Anggaran keperluan arus maksimum (Maximum Demand)</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200 text-xs tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4">Jenis Beban</th>
+                      <th className="px-6 py-4 text-right">Arus Maksimum (A)</th>
+                      <th className="px-6 py-4 text-right bg-blue-50 text-blue-900 border-l border-blue-100">Arus Anggaran (A)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {result.rows.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 font-medium text-slate-800">{row.label}</td>
+                        <td className="px-6 py-4 text-right font-mono text-slate-600">{row.maxCurrent.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50 border-l border-blue-100">{row.estCurrent.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-base">
+                    <tr>
+                      <td className="px-6 py-4 text-slate-800">JUMLAH KESELURUHAN</td>
+                      <td className="px-6 py-4 text-right text-slate-800">{result.totalMax.toFixed(2)} A</td>
+                      <td className="px-6 py-4 text-right text-blue-700 bg-blue-100 border-l border-blue-200">{result.totalEst.toFixed(2)} A</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-blue-900 text-sm">
+            <h3 className="font-bold mb-2 flex items-center gap-2">
+                <Icons.AlertCircle size={16} />
+                Panduan Penggunaan:
+            </h3>
+            <ul className="list-disc list-inside space-y-1 text-blue-800/80 ml-2">
+              <li>Pilih <strong>Jenis Beban</strong> yang sesuai daripada senarai.</li>
+              <li>Masukkan <strong>Kuasa (Watt)</strong>. Untuk soket, masukkan nilai dalam <strong>Ampere (A)</strong>.</li>
+              <li>Tekan butang <strong>Tambah Beban</strong> untuk menambah peralatan lain.</li>
+              <li>Tekan butang <strong>Kira</strong> untuk mendapatkan keputusan pengiraan.</li>
+              <li>Untuk <strong>Soket Gelang & Jejari</strong>: Masukkan jumlah litar sebagai 'Bilangan' dan rating litar (cth: 32A atau 20A) di ruangan 'Ampere'.</li>
+            </ul>
+          </div>
+        </div>
+      );
+    };
+
+    // Main App Component
     const App = () => {
       const [activeTab, setActiveTab] = useState('calc');
 
       return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+        <div className="flex flex-col min-h-screen">
           <Header activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          <main className="flex-grow container max-w-4xl mx-auto px-4 py-8">
+          <main className="flex-grow container max-w-5xl mx-auto px-4 py-8">
             {activeTab === 'notes' && <Notes />}
             {activeTab === 'calc' && <Calculator />}
             {activeTab === 'quiz' && <Quiz />}
           </main>
           
-          <footer className="bg-slate-900 text-slate-400 py-6 text-center text-sm">
-            <p>© {new Date().getFullYear()} Kalkulator Faktor Kepelbagaian.</p>
+          <footer className="bg-slate-900 text-slate-400 py-8 mt-auto">
+            <div className="container mx-auto px-4 text-center">
+                <p className="font-medium text-slate-300 mb-2">Kalkulator Faktor Kepelbagaian MS 1979</p>
+                <p className="text-xs text-slate-500">
+                    Dibangunkan untuk tujuan pembelajaran dan rujukan pantas. Sila rujuk buku piawaian rasmi untuk pengiraan kritikal.
+                </p>
+                <p className="text-xs text-slate-600 mt-4">© {new Date().getFullYear()} All rights reserved.</p>
+            </div>
           </footer>
         </div>
       );
     };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    // Render Logic
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
     root.render(<App />);
   </script>
 </body>
 </html>
-
-
-
