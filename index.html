@@ -35,7 +35,7 @@
     import React, { useState, useEffect } from 'https://esm.sh/react@19.2.3';
     import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
 
-    // --- CONSTANTS & TYPES ---
+    // --- TETAPAN & JENIS ---
     const DEFAULT_VOLTAGE = 230;
 
     const LoadType = {
@@ -70,7 +70,7 @@
       [LoadType.OTHER_SOCKETS]: 'Soket Alir Keluar (Lain-lain)'
     };
 
-    // --- ICONS ---
+    // --- IKON ---
     const CalculatorIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
     );
@@ -102,7 +102,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
     );
 
-    // --- CALCULATION SERVICE ---
+    // --- SERVIS PENGIRAAN ---
     const calculateDiversity = (loads, voltage = DEFAULT_VOLTAGE) => {
       const groups = {};
       const validLoads = loads.filter(l => l.type !== '' && l.qty !== '' && Number(l.qty) > 0 && l.power !== '' && Number(l.power) >= 0);
@@ -120,7 +120,6 @@
         let groupEst = 0;
 
         const sumMaxWatts = (factor = 1, divisor = voltage) => group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
-        const sumMaxAmps = () => group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)), 0);
         const expandCircuits = (isAmps = true) => {
           const circuits = [];
           group.forEach(l => {
@@ -179,15 +178,19 @@
             break;
         }
 
-        totalMax += groupMax;
-        totalEst += groupEst;
-        rows.push({ label: LOAD_LABELS[type], maxCurrent: groupMax, estCurrent: groupEst });
+        // Bundarkan setiap baris kepada 2 titik perpuluhan sebelum ditambah ke jumlah keseluruhan
+        const groupMaxRounded = Math.round(groupMax * 100) / 100;
+        const groupEstRounded = Math.round(groupEst * 100) / 100;
+
+        totalMax += groupMaxRounded;
+        totalEst += groupEstRounded;
+        rows.push({ label: LOAD_LABELS[type], maxCurrent: groupMaxRounded, estCurrent: groupEstRounded });
       }
 
       return { rows, totalMax, totalEst };
     };
 
-    // --- COMPONENTS ---
+    // --- KOMPONEN ---
 
     const Notes = () => {
       const tableData = [
@@ -229,7 +232,7 @@
               </table>
             </div>
           </div>
-          <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-yellow-900">
+          <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-yellow-900 shadow-sm">
             <h3 className="font-bold mb-3 flex items-center gap-2 text-lg">
               <BookOpenIcon size={20} className="text-yellow-700" /> Nota Pengetahuan:
             </h3>
@@ -307,7 +310,7 @@
             </div>
           </div>
           {result && (
-            <div id="results-section" className="bg-white rounded-xl shadow-lg border animate-slide-up overflow-hidden">
+            <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 animate-slide-up overflow-hidden">
               <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
                 <ZapIcon className="text-yellow-400" size={24} />
                 <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Anggaran keperluan arus maksimum (MD)</p></div>
@@ -322,7 +325,7 @@
                   ))}
                 </tbody>
                 <tfoot className="bg-slate-100 font-bold border-t">
-                  <tr><td className="px-6 py-4">JUMLAH</td><td className="px-6 py-4 text-right">{result.totalMax.toFixed(2)} A</td><td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td></tr>
+                  <tr><td className="px-6 py-4">JUMLAH KESELURUHAN</td><td className="px-6 py-4 text-right">{result.totalMax.toFixed(2)} A</td><td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td></tr>
                 </tfoot>
               </table>
             </div>
@@ -354,21 +357,24 @@
 
       return (
         <div className="space-y-10 animate-fade-in pb-12">
-          <div className="bg-white p-8 rounded-xl border text-center"><h2 className="text-2xl font-bold">Latihan Faktor Kepelbagaian</h2><p className="text-slate-500 mt-1">Uji kefahaman anda berdasarkan MS 1979</p></div>
+          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center shadow-sm">
+            <h2 className="text-2xl font-bold">Latihan Faktor Kepelbagaian</h2>
+            <p className="text-slate-500 mt-1">Uji kefahaman anda berdasarkan MS 1979</p>
+          </div>
           <section className="space-y-6">
             <h3 className="text-xl font-bold border-l-4 border-green-500 pl-4 uppercase">Tahap: Mudah</h3>
             {mudah.map(q => (
-              <div key={q.id} className="bg-white p-6 rounded-xl border shadow-sm">
+              <div key={q.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p className="font-bold text-slate-800 mb-4">{q.text}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   {q.options.map(o => (
-                    <button key={o.v} onClick={() => !showResult[q.id] && setAnswers({ ...answers, [q.id]: o.v })} className={`p-4 border-2 rounded-xl text-left font-semibold ${answers[q.id] === o.v ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50/50'}`}>{o.l}</button>
+                    <button key={o.v} onClick={() => !showResult[q.id] && setAnswers({ ...answers, [q.id]: o.v })} className={`p-4 border-2 rounded-xl text-left font-semibold transition-all ${answers[q.id] === o.v ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50/50 hover:border-blue-200'}`}>{o.l}</button>
                   ))}
                 </div>
                 {!showResult[q.id] ? (
-                  <button onClick={() => answers[q.id] && setShowResult({ ...showResult, [q.id]: true })} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold" disabled={!answers[q.id]}>Semak</button>
+                  <button onClick={() => answers[q.id] && setShowResult({ ...showResult, [q.id]: true })} className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold shadow hover:bg-blue-700 transition-all active:scale-95" disabled={!answers[q.id]}>Semak Jawapan</button>
                 ) : (
-                  <div className={`p-4 rounded-xl border-2 ${answers[q.id] === q.ans ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                  <div className={`p-4 rounded-xl border-2 animate-slide-up ${answers[q.id] === q.ans ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
                     <p className="font-bold">{answers[q.id] === q.ans ? 'Tepat!' : 'Salah!'}</p>
                     <p className="text-sm mt-1"><strong>Penjelasan:</strong> {q.exp}</p>
                   </div>
@@ -378,24 +384,39 @@
           </section>
           <section className="space-y-6">
             <h3 className="text-xl font-bold border-l-4 border-yellow-500 pl-4 uppercase">Tahap: Sederhana</h3>
-            <div className="bg-white p-6 rounded-xl border space-y-4">
-              <p>1. Sebuah rumah kediaman kecil mempunyai 7 lampu filamen berkuasa 100W, 5 lampu kalimantang berkuasa 45W, 2 x 20A soket alir keluar 13A (jejari) dan sebuah pemanas air (segera) 6kW. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
-              <p>2. Sebuah rumah kediaman kecil mempunyai 10 lampu filamen berkuasa 100W, 6 Kipas siling berkuasa 85W, 2 x 20A(fius) litar akhir soket alir keluar 13A (jejari), dan sebuah penghawa dingin 1.5Hp. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+              <p className="text-slate-700 leading-relaxed">1. Sebuah rumah kediaman kecil mempunyai 7 lampu filamen berkuasa 100W, 5 lampu kalimantang berkuasa 45W, 2 x 20A soket alir keluar 13A (jejari) dan sebuah pemanas air (segera) 6kW. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
+              <p className="text-slate-700 leading-relaxed border-t pt-4">2. Sebuah rumah kediaman kecil mempunyai 10 lampu filamen berkuasa 100W, 6 Kipas siling berkuasa 85W, 2 x 20A(fius) litar akhir soket alir keluar 13A (jejari), dan sebuah penghawa dingin 1.5Hp. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
             </div>
           </section>
           <section className="space-y-6">
             <h3 className="text-xl font-bold border-l-4 border-red-500 pl-4 uppercase">Tahap: Sukar</h3>
-            <div className="bg-white p-6 rounded-xl border space-y-6">
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm space-y-8">
               <div>
-                <p className="font-bold underline mb-2">Soalan 1</p>
-                <p className="mb-2">Sebuah rumah kediaman banglo 1 fasa 230V mempunyai beban-beban seperti berikut:</p>
-                <ul className="list-disc ml-6 text-slate-600 text-sm"><li>14 x 36W Kalimantang</li><li>8 x 60W Filamen</li><li>6 x 75W Kipas</li><li>15 Soket 13A</li><li>2 x 1hp Aircond</li><li>1 x 3.5kW Pemanas Segera</li></ul>
-                <p className="mt-2 text-sm italic">Kirakan arus maksimum dan arus anggaran.</p>
+                <p className="font-bold underline text-slate-900 mb-4">Soalan 1</p>
+                <p className="mb-4 text-slate-700">Sebuah rumah kediaman banglo 1 fasa 230V mempunyai beban-beban seperti berikut:</p>
+                <ul className="list-none ml-4 text-slate-600 space-y-1">
+                  <li>i. 14 x 36W lampu kalimantang</li>
+                  <li>ii. 8 x 60W lampu filamen</li>
+                  <li>iii. 6 x 75W kipas siling</li>
+                  <li>iv. 15 soket alir keluar 13A</li>
+                  <li>v. 2 x 1hp Penghawa dingin</li>
+                  <li>vi. 1 x 3.5kW pemanas air (segera)</li>
+                </ul>
+                <p className="mt-4 text-sm italic text-slate-500 border-t pt-2">Kirakan arus maksimum dan arus anggaran mengikut peraturan MS IEC 60038.</p>
               </div>
-              <div className="border-t pt-4">
-                <p className="font-bold underline mb-2">Soalan 2</p>
-                <p className="mb-2">Rumah kediaman 1 fasa 230V, 50Hz mempunyai beban:</p>
-                <ul className="list-disc ml-6 text-slate-600 text-sm"><li>12 x 60W Filamen</li><li>10 x 40W Kalimantang</li><li>4 x 85W Kipas</li><li>8 x 13A Soket</li><li>2 x 3kW Pemanas (Serta merta)</li><li>1 x 7kW Pemasak + 13A soket</li><li>1 x 1.5Hp Aircond</li></ul>
+              <div className="border-t pt-6">
+                <p className="font-bold underline text-slate-900 mb-4">Soalan 2</p>
+                <p className="mb-4 text-slate-700">Rumah kediaman 1 fasa 230V, 50Hz mempunyai beban:</p>
+                <ul className="list-none ml-4 text-slate-600 space-y-1">
+                  <li>i. 12 x 60W lampu filamen</li>
+                  <li>ii. 10 x 40W lampu kalimantang</li>
+                  <li>iii. 4 x 85W kipas siling</li>
+                  <li>iv. 8 x 13A suis soket alur keluar</li>
+                  <li>v. 2 x 3kW pemanas air (serta merta)</li>
+                  <li>vi. 1 x 7kW alat kawalan pemasak disertakan 13A suis soket alur keluar</li>
+                  <li>vii. 1 x 1.5Hp penghawa dingin</li>
+                </ul>
               </div>
             </div>
           </section>
@@ -409,16 +430,16 @@
         <div className="flex flex-col min-h-screen">
           <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white sticky top-0 z-50 shadow-lg">
             <div className="max-w-5xl mx-auto px-4 py-6 text-center">
-              <h1 className="text-2xl font-bold">Kalkulator Faktor Kepelbagaian</h1>
-              <p className="text-blue-100 text-xs mt-1">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
+              <h1 className="text-2xl font-bold tracking-tight">Kalkulator Faktor Kepelbagaian</h1>
+              <p className="text-blue-100 text-xs mt-1 font-light">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
             </div>
-            <nav className="bg-blue-800/50 py-3 flex justify-center space-x-2">
+            <nav className="bg-blue-800/50 backdrop-blur-sm py-3 flex justify-center space-x-2 border-t border-blue-600/30">
               {[
                 { id: 'notes', label: 'Nota', icon: BookOpenIcon },
                 { id: 'calc', label: 'Pengiraan', icon: CalculatorIcon },
                 { id: 'quiz', label: 'Soalan', icon: HelpCircleIcon }
               ].map(item => (
-                <button key={item.id} onClick={() => setTab(item.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${tab === item.id ? 'bg-white text-blue-900' : 'text-blue-100 hover:bg-blue-700'}`}>
+                <button key={item.id} onClick={() => setTab(item.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${tab === item.id ? 'bg-white text-blue-900 shadow-md transform scale-105' : 'text-blue-100 hover:bg-blue-700'}`}>
                   <item.icon size={16} /> {item.label}
                 </button>
               ))}
@@ -429,9 +450,11 @@
             {tab === 'calc' && <Calculator />}
             {tab === 'quiz' && <Quiz />}
           </main>
-          <footer className="bg-slate-900 text-slate-500 py-8 text-center text-xs">
-            <p className="mb-2 text-slate-400">© {new Date().getFullYear()} Kalkulator Faktor Kepelbagaian MS 1979</p>
-            <p>Dibangunkan untuk rujukan pendidikan elektrik.</p>
+          <footer className="bg-slate-900 text-slate-500 py-10 text-center text-xs">
+            <div className="max-w-md mx-auto">
+              <p className="mb-2 text-slate-400 font-medium">© {new Date().getFullYear()} Kalkulator Faktor Kepelbagaian MS 1979</p>
+              <p className="leading-relaxed">Dibangunkan untuk rujukan pendidikan elektrik. Sila rujuk buku piawaian rasmi untuk tujuan reka bentuk kritikal.</p>
+            </div>
           </footer>
         </div>
       );
