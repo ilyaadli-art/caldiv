@@ -4,57 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kalkulator Faktor Kepelbagaian | MS 1979</title>
-  
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- React & ReactDOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    /* Custom scrollbar for better look */
+    body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
     .animate-fade-in { animation: fadeIn 0.5s ease-out; }
-    .animate-slide-up { animation: slideUp 0.5s ease-out; }
+    .animate-slide-up { animation: slideUp 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/"
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
-  <div id="root" class="flex flex-col min-h-screen"></div>
+<body class="bg-slate-50 text-slate-800">
+  <div id="root"></div>
 
-  <script type="text/babel" data-presets="typescript,react">
-    const { useState, useEffect } = React;
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect } from 'https://esm.sh/react@19.2.3';
+    import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
 
-    // --- TYPES & CONSTANTS ---
+    // --- CONSTANTS & TYPES ---
+    const DEFAULT_VOLTAGE = 230;
+
     const LoadType = {
       LIGHTING: 'lighting',
       FLUORESCENT: 'fluorescent',
@@ -70,8 +53,6 @@
       FINAL_CIRCUIT_RADIAL: 'final_circuit_radial',
       OTHER_SOCKETS: 'other_sockets'
     };
-
-    const DEFAULT_VOLTAGE = 230;
 
     const LOAD_LABELS = {
       [LoadType.LIGHTING]: 'Lampu (Filamen)',
@@ -93,39 +74,30 @@
     const CalculatorIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
     );
-
     const BookOpenIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
     );
-
     const HelpCircleIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
     );
-
     const PlusIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
     );
-
     const Trash2Icon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
     );
-
     const RotateCcwIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
     );
-
     const ZapIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     );
-
     const CheckCircle2Icon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
     );
-
     const XCircleIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
     );
-
     const AlertCircleIcon = ({ size = 24, className = "" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
     );
@@ -133,15 +105,7 @@
     // --- CALCULATION SERVICE ---
     const calculateDiversity = (loads, voltage = DEFAULT_VOLTAGE) => {
       const groups = {};
-      
-      // Filter valid loads
-      const validLoads = loads.filter(l => 
-        l.type !== '' && 
-        l.qty !== '' && Number(l.qty) > 0 &&
-        l.power !== '' && Number(l.power) >= 0
-      );
-
-      // Group loads by type
+      const validLoads = loads.filter(l => l.type !== '' && l.qty !== '' && Number(l.qty) > 0 && l.power !== '' && Number(l.power) >= 0);
       validLoads.forEach(l => {
         if (!groups[l.type]) groups[l.type] = [];
         groups[l.type].push(l);
@@ -151,154 +115,73 @@
       let totalMax = 0;
       let totalEst = 0;
 
-      for (const [typeStr, group] of Object.entries(groups)) {
-        const type = typeStr;
-        if (!group) continue;
-
+      for (const [type, group] of Object.entries(groups)) {
         let groupMax = 0;
         let groupEst = 0;
 
-        // Helper to sum max current based on Watts
-        const sumMaxWatts = (factor = 1, divisor = voltage) => 
-          group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
-        
-        // Helper to sum max current based on Amps (Direct input)
-        const sumMaxAmps = () => 
-          group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)), 0);
-
-        // Expand multiple quantity entries into individual circuit ratings for sorting logic
+        const sumMaxWatts = (factor = 1, divisor = voltage) => group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
+        const sumMaxAmps = () => group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)), 0);
         const expandCircuits = (isAmps = true) => {
           const circuits = [];
           group.forEach(l => {
             const rating = isAmps ? Number(l.power) : (Number(l.power) / voltage);
             for(let i = 0; i < Number(l.qty); i++) circuits.push(rating);
           });
-          return circuits.sort((a, b) => b - a); // Descending
+          return circuits.sort((a, b) => b - a);
         };
 
         switch (type) {
           case LoadType.LIGHTING:
-            groupMax = sumMaxWatts(1, voltage);
+            groupMax = sumMaxWatts(1);
             groupEst = groupMax * 0.66;
             break;
-
           case LoadType.FLUORESCENT:
-            // 1.8 multiplier for fluorescent startup/ballast
-            groupMax = sumMaxWatts(1.8, voltage);
+            groupMax = sumMaxWatts(1.8);
             groupEst = groupMax * 0.66;
             break;
-
           case LoadType.CEILING_FAN:
-            // 0.85 power factor approx
             groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
             groupEst = groupMax * 0.66;
             break;
-
           case LoadType.AIRCOND:
             groupMax = group.reduce((s, l) => s + (Number(l.qty) * Number(l.power)) / (voltage * 0.85), 0);
-            groupEst = groupMax; // No diversity
+            groupEst = groupMax;
             break;
-
           case LoadType.HEATING_POWER:
-            groupMax = sumMaxWatts(1, voltage);
-            // 100% up to 10A + 50% remainder
+            groupMax = sumMaxWatts(1);
             groupEst = groupMax <= 10 ? groupMax : 10 + (groupMax - 10) * 0.5;
             break;
-
           case LoadType.COOKING:
-            groupMax = sumMaxWatts(1, voltage);
-            // 10A + 30% remainder + 5A auxiliary
-            const baseCooking = 10;
-            const aux = 5;
-            const remainder = Math.max(0, groupMax - baseCooking);
-            groupEst = baseCooking + (remainder * 0.3) + aux;
+            groupMax = sumMaxWatts(1);
+            groupEst = 10 + ((groupMax - 10) * 0.3) + 5;
             break;
-
-          case LoadType.WATER_HEATER: // Instant
-            groupMax = sumMaxWatts(1, voltage);
-            const heaters = expandCircuits(false); // input is watts
-            if (heaters.length > 0) groupEst += heaters[0]; // 1st: 100%
-            if (heaters.length > 1) groupEst += heaters[1]; // 2nd: 100%
-            if (heaters.length > 2) {
-              const rest = heaters.slice(2).reduce((a, b) => a + b, 0);
-              groupEst += rest * 0.25; // Remainder: 25%
-            }
+          case LoadType.WATER_HEATER:
+            groupMax = sumMaxWatts(1);
+            const heaters = expandCircuits(false);
+            if (heaters.length > 0) groupEst += heaters[0];
+            if (heaters.length > 1) groupEst += heaters[1];
+            if (heaters.length > 2) groupEst += heaters.slice(2).reduce((a, b) => a + b, 0) * 0.25;
             break;
-
           case LoadType.WATER_HEATER_CONTROLLED:
           case LoadType.FLOOR_HEATER:
           case LoadType.SPACE_HEATER:
-            groupMax = sumMaxWatts(1, voltage);
-            groupEst = groupMax; // No diversity
+            groupMax = sumMaxWatts(1);
+            groupEst = groupMax;
             break;
-
           case LoadType.FINAL_CIRCUIT_RING:
-          case LoadType.FINAL_CIRCUIT_RADIAL: {
-            // Max is simple sum of Amps
-            groupMax = sumMaxAmps();
-            
-            // Diversity Calculation
-            const circuits = expandCircuits(true); // Input is Amps
-            
-            if (circuits.length > 0) {
-              // 100% of the largest
-              groupEst += circuits[0];
-              
-              // 40% of the rest
-              if (circuits.length > 1) {
-                const rest = circuits.slice(1).reduce((a, b) => a + b, 0);
-                groupEst += rest * 0.4;
-              }
-            }
-            break;
-          }
-
+          case LoadType.FINAL_CIRCUIT_RADIAL:
           case LoadType.OTHER_SOCKETS:
-            // Complex legacy logic for standard sockets based on MS 1979 optimization
-            let totalSockets = 0;
-            group.forEach(l => totalSockets += Number(l.qty));
-            
-            let circuits2Socket = 0;
-            let circuits3Socket = 0;
-
-            if (totalSockets <= 2) {
-              circuits2Socket = 1;
-            } else {
-               circuits3Socket = Math.floor((totalSockets - 1) / 3);
-               circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
-               while (circuits2Socket * 2 + circuits3Socket * 3 < totalSockets) {
-                 circuits3Socket++;
-                 circuits2Socket = Math.ceil((totalSockets - circuits3Socket * 3) / 2);
-               }
-            }
-            
-            groupMax = (circuits2Socket * 20) + (circuits3Socket * 32);
-            
-            const circuitAmps = [];
-            for(let i=0; i<circuits2Socket; i++) circuitAmps.push(20);
-            for(let i=0; i<circuits3Socket; i++) circuitAmps.push(32);
-            circuitAmps.sort((a, b) => b - a);
-            
-            if (circuitAmps.length > 0) {
-              groupEst = circuitAmps[0];
-              const rest = circuitAmps.slice(1).reduce((a, b) => a + b, 0);
-              groupEst += rest * 0.4;
+            const circuits = expandCircuits(true);
+            groupMax = circuits.reduce((a, b) => a + b, 0);
+            if (circuits.length > 0) {
+              groupEst = circuits[0] + (circuits.slice(1).reduce((a, b) => a + b, 0) * 0.4);
             }
             break;
-          
-          default:
-            groupMax = 0;
-            groupEst = 0;
         }
 
         totalMax += groupMax;
         totalEst += groupEst;
-
-        rows.push({
-          label: LOAD_LABELS[type],
-          maxCurrent: groupMax,
-          estCurrent: groupEst
-        });
+        rows.push({ label: LOAD_LABELS[type], maxCurrent: groupMax, estCurrent: groupEst });
       }
 
       return { rows, totalMax, totalEst };
@@ -306,18 +189,16 @@
 
     // --- COMPONENTS ---
 
-    // Notes Component
     const Notes = () => {
       const tableData = [
-        { type: "Lampu (Filamen)", max: "Bilangan Beban × Kuasa / 230V", est: "66% daripada jumlah arus maksimum" },
-        { type: "Lampu (Kalimantang)", max: "Bilangan Beban × Kuasa × 1.8 / 230V", est: "66% daripada jumlah arus maksimum" },
-        { type: "Kipas Siling", max: "Bilangan Beban × Kuasa / 230V x 0.85", est: "66% daripada jumlah arus maksimum" },
-        { type: "Penghawa Dingin", max: "Bilangan Beban × Kuasa / 230V x 0.85", est: "100% (Tiada Faktor Kepelbagaian)" },
-        { type: "Pemanasan dan Kuasa", max: "Bilangan Beban × Kuasa / 230V", est: "100% sehingga 10A + 50% selebihnya" },
-        { type: "Pemasak", max: "Bilangan Beban × Kuasa / 230V", est: "10A + 30% beban penuh + 5A aux" },
-        { type: "Pemanas Air (Segera)", max: "Bilangan Beban × Kuasa / 230V", est: "100% 2 beban terbesar + 25% selebihnya" },
-        { type: "Pemanas Air (Laras Suhu)", max: "Bilangan Beban × Kuasa / 230V", est: "100% (Tiada Faktor Kepelbagaian)" },
-        { type: "Soket Alir Keluar (Gelang/Jejari)", max: "Bilangan Beban × Kuasa (A)", est: "100% litar terbesar + 40% selebihnya" },
+        { type: "Lampu (Filamen)", max: "Bilangan × Kuasa / 230V", est: "66% daripada arus maksimum" },
+        { type: "Lampu (Kalimantang)", max: "Bilangan × Kuasa × 1.8 / 230V", est: "66% daripada arus maksimum" },
+        { type: "Kipas Siling", max: "Bilangan × Kuasa / (230V × 0.85)", est: "66% daripada arus maksimum" },
+        { type: "Penghawa Dingin", max: "Bilangan × Kuasa / (230V × 0.85)", est: "100% (Tiada Faktor Kepelbagaian)" },
+        { type: "Pemanas/Kuasa", max: "Bilangan × Kuasa / 230V", est: "10A + 50% selebihnya" },
+        { type: "Pemasak", max: "Bilangan × Kuasa / 230V", est: "10A + 30% baki + 5A aux" },
+        { type: "Pemanas Air (Segera)", max: "Bilangan × Kuasa / 230V", est: "100% (2 terbesar) + 25% baki" },
+        { type: "Soket Alir Keluar", max: "Bilangan × Rating (A)", est: "100% litar terbesar + 40% baki" },
       ];
 
       return (
@@ -325,21 +206,20 @@
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-slate-50">
               <h2 className="text-xl font-bold text-slate-800">Formula Faktor Kepelbagaian</h2>
-              <p className="text-slate-500 text-sm mt-1">Rujukan pantas pengiraan mengikut jenis beban</p>
+              <p className="text-slate-500 text-sm mt-1">Rujukan pantas mengikut piawaian MS 1979</p>
             </div>
-            
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-blue-50 text-blue-900 uppercase font-semibold text-xs tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 rounded-tl-lg">Jenis Beban</th>
+                    <th className="px-6 py-4">Jenis Beban</th>
                     <th className="px-6 py-4">Arus Maksimum</th>
-                    <th className="px-6 py-4 rounded-tr-lg">Arus Anggaran (Diversity)</th>
+                    <th className="px-6 py-4">Arus Anggaran (Diversity)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {tableData.map((row, index) => (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                  {tableData.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
                       <td className="px-6 py-4 font-medium text-slate-900">{row.type}</td>
                       <td className="px-6 py-4 text-slate-600">{row.max}</td>
                       <td className="px-6 py-4 text-slate-600">{row.est}</td>
@@ -349,16 +229,14 @@
               </table>
             </div>
           </div>
-
-          <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-yellow-900 shadow-sm">
+          <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-yellow-900">
             <h3 className="font-bold mb-3 flex items-center gap-2 text-lg">
-              <BookOpenIcon size={20} className="text-yellow-700" />
-              Nota Pengetahuan:
+              <BookOpenIcon size={20} className="text-yellow-700" /> Nota Pengetahuan:
             </h3>
             <ol className="list-decimal list-inside space-y-2 text-yellow-800 ml-1">
               <li><strong>230V</strong> digunakan untuk Voltan Satu Fasa merujuk kepada TNB.</li>
               <li>Faktor Kuasa beban minimum <strong>0.85</strong> merujuk kepada TNB.</li>
-              <li>Faktor Pembetulan <strong>1.8</strong> untuk lampu kalimantang merujuk kepada ST.GOV Third Schedule (Regulation 11).</li>
+              <li>Faktor Pembetulan <strong>1.8</strong> untuk lampu kalimantang merujuk kepada ST.</li>
               <li><strong>1 hp = 746W</strong> merujuk kepada JKR.</li>
             </ol>
           </div>
@@ -366,441 +244,200 @@
       );
     };
 
-    // Quiz Component
-    const Quiz = () => {
-      const [answers, setAnswers] = useState({});
-      const [showResult, setShowResult] = useState({});
-
-      const questions = [
-        {
-          id: 1,
-          text: "Apakah faktor kepelbagaian untuk lampu filamen?",
-          options: [
-            { value: 'a', label: '100% arus maksimum' },
-            { value: 'b', label: '66% daripada arus maksimum' },
-            { value: 'c', label: '50% daripada arus maksimum' },
-            { value: 'd', label: '75% daripada arus maksimum' }
-          ],
-          correctAnswer: 'b',
-          explanation: "Mengikut MS 1979, faktor kepelbagaian yang dibenarkan untuk lampu filamen ialah 66% daripada jumlah arus beban penuh."
-        },
-        {
-          id: 2,
-          text: "Bagaimana pengiraan arus anggaran untuk litar jejari (Radial Circuit)?",
-          options: [
-            { value: 'a', label: '100% litar terbesar + 40% bakinya' },
-            { value: 'b', label: '100% semua litar' },
-            { value: 'c', label: '66% daripada jumlah arus' },
-            { value: 'd', label: '100% litar pertama + 50% bakinya' }
-          ],
-          correctAnswer: 'a',
-          explanation: "Untuk litar akhir soket alir keluar (Jejari dan Gelang), pengiraannya ialah 100% permintaan arus litar terbesar ditambah 40% permintaan arus bagi setiap litar lain."
-        },
-        {
-          id: 3,
-          text: "Untuk pemanas air dengan kawalan laras suhu, apakah faktor kepelbagaian yang dibenarkan?",
-          options: [
-            { value: 'a', label: '66% arus maksimum' },
-            { value: 'b', label: '50% arus maksimum' },
-            { value: 'c', label: '100% arus maksimum (tiada)' },
-            { value: 'd', label: '75% arus maksimum' }
-          ],
-          correctAnswer: 'c',
-          explanation: "Pemanas air yang dikawal laras suhu tidak dibenarkan sebarang faktor kepelbagaian. Ia mesti dikira pada 100% beban penuh."
-        }
-      ];
-
-      const handleCheck = (qId) => {
-        if (!answers[qId]) return;
-        setShowResult(prev => ({ ...prev, [qId]: true }));
-      };
-
-      return (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Uji Kefahaman Anda</h2>
-            <p className="text-slate-500 mb-6">Jawab soalan berikut berkaitan piawaian MS 1979</p>
-            <div className="flex justify-center mb-4">
-                <img 
-                    src="https://raw.githubusercontent.com/ilyaadli-art/caldiv/main/gambarcth.jpeg" 
-                    alt="Example Diagram" 
-                    className="rounded-lg shadow-md max-h-64 object-cover"
-                />
-            </div>
-          </div>
-
-          {questions.map((q) => {
-            const isAnswered = showResult[q.id];
-            const isCorrect = answers[q.id] === q.correctAnswer;
-            
-            return (
-              <div key={q.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-                <div className="p-6">
-                  <div className="flex gap-3 mb-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-                        {q.id}
-                      </div>
-                      <h3 className="text-lg font-medium text-slate-900 mt-0.5">{q.text}</h3>
-                  </div>
-                  
-                  <div className="space-y-3 pl-11">
-                    {q.options.map((opt) => (
-                      <label 
-                        key={opt.value} 
-                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                          answers[q.id] === opt.value 
-                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
-                            : 'border-slate-200 hover:border-blue-300'
-                        }`}
-                      >
-                        <input 
-                          type="radio" 
-                          name={`q-${q.id}`} 
-                          value={opt.value}
-                          checked={answers[q.id] === opt.value}
-                          onChange={() => !isAnswered && setAnswers(prev => ({ ...prev, [q.id]: opt.value }))}
-                          disabled={isAnswered}
-                          className="text-blue-600 focus:ring-blue-500 w-4 h-4"
-                        />
-                        <span className="text-slate-700">{opt.label}</span>
-                      </label>
-                    ))}
-
-                    {!isAnswered ? (
-                      <button 
-                        onClick={() => handleCheck(q.id)}
-                        disabled={!answers[q.id]}
-                        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Semak Jawapan
-                      </button>
-                    ) : (
-                      <div className={`mt-4 p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                        <div className="flex items-start gap-3">
-                          {isCorrect ? <CheckCircle2Icon className="text-green-600 shrink-0" size={24} /> : <XCircleIcon className="text-red-600 shrink-0" size={24} />}
-                          <div>
-                            <p className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                              {isCorrect ? 'Jawapan Tepat!' : 'Kurang Tepat.'}
-                            </p>
-                            <p className="text-slate-700 text-sm mt-1">{q.explanation}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    };
-
-    // Calculator Component
     const Calculator = () => {
-      const [loads, setLoads] = useState([
-        { id: '1', type: '', qty: '', power: '' }
-      ]);
-      const [voltage] = useState(DEFAULT_VOLTAGE);
+      const [loads, setLoads] = useState([{ id: '1', type: '', qty: '', power: '' }]);
       const [result, setResult] = useState(null);
       const [error, setError] = useState(null);
 
-      const addLoad = () => {
-        const newId = Math.random().toString(36).substr(2, 9);
-        setLoads([...loads, { id: newId, type: '', qty: '', power: '' }]);
-        setResult(null); 
-        setError(null);
-      };
-
-      const removeLoad = (id) => {
-        if (loads.length > 1) {
-          setLoads(loads.filter(l => l.id !== id));
-          setResult(null);
-        } else {
-          setError("Sekurang-kurangnya satu beban perlu ada.");
-          setTimeout(() => setError(null), 3000);
-        }
-      };
-
       const updateLoad = (id, field, value) => {
-        setLoads(loads.map(l => l.id === id ? { ...l, [field]: value } : l));
-        setResult(null); 
-        setError(null);
+        let san = value;
+        if (field === 'qty') san = value.replace(/[^0-9]/g, '');
+        if (field === 'power') {
+          san = value.replace(/[^0-9.]/g, '');
+          const parts = san.split('.');
+          if (parts.length > 2) san = parts[0] + '.' + parts.slice(1).join('');
+        }
+        setLoads(loads.map(l => l.id === id ? { ...l, [field]: san } : l));
+        setResult(null); setError(null);
       };
 
       const handleCalculate = () => {
-        // Validation
-        const hasEmptyFields = loads.some(l => l.type === '' || l.qty === '' || l.power === '');
-        
-        if (hasEmptyFields) {
-          setError("Sila pastikan semua ruangan (Jenis Beban, Bilangan, Kuasa) telah diisi.");
-          return;
+        if (loads.some(l => !l.type || !l.qty || !l.power)) {
+          setError("Sila pastikan semua ruangan telah diisi."); return;
         }
-
-        const hasZeroValues = loads.some(l => Number(l.qty) <= 0 || Number(l.power) < 0);
-        if (hasZeroValues) {
-          setError("Bilangan beban mesti lebih daripada 0 dan kuasa/ampere tidak boleh negatif.");
-          return;
-        }
-
-        const calculated = calculateDiversity(loads, voltage);
-        setResult(calculated);
-        setError(null);
-        
-        // Smooth scroll to results
-        setTimeout(() => {
-          const element = document.getElementById('results-section');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 100);
-      };
-
-      const handleReset = () => {
-        if(window.confirm("Adakah anda pasti mahu menetapkan semula semua data?")) {
-            setLoads([{ id: '1', type: '', qty: '', power: '' }]);
-            setResult(null);
-            setError(null);
-        }
-      };
-
-      const isSocketType = (type) => {
-        return type === LoadType.FINAL_CIRCUIT_RING || 
-               type === LoadType.FINAL_CIRCUIT_RADIAL || 
-               type === LoadType.OTHER_SOCKETS;
+        setResult(calculateDiversity(loads));
+        setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
       };
 
       return (
         <div className="space-y-8 animate-fade-in pb-12">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <div>
-                  <h2 className="text-xl font-bold text-slate-800">Senarai Beban</h2>
-                  <p className="text-sm text-slate-500">Voltan Sistem: {voltage}V</p>
-              </div>
-              <button 
-                onClick={handleReset}
-                className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all p-2"
-                title="Reset Semula"
-              >
-                <RotateCcwIcon size={18} />
-              </button>
+            <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold">Senarai Beban</h2>
+              <button onClick={() => setLoads([{ id: '1', type: '', qty: '', power: '' }])} className="p-2 text-slate-400 hover:text-red-500"><RotateCcwIcon size={18} /></button>
             </div>
-            
-            <div className="p-6 space-y-6">
-              {loads.map((load, index) => (
-                <div key={load.id} className="relative bg-slate-50 p-4 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors group">
-                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-4 ring-white">
-                    {index + 1}
+            <div className="p-6 space-y-4">
+              {loads.map((l, i) => (
+                <div key={l.id} className="relative p-4 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-5">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Jenis Beban</label>
+                    <select value={l.type} onChange={e => updateLoad(l.id, 'type', e.target.value)} className="w-full p-2 border rounded mt-1 text-sm">
+                      <option value="">Pilih Jenis Beban</option>
+                      {Object.entries(LOAD_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div className="md:col-span-5">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Jenis Beban</label>
-                      <div className="relative">
-                        <select 
-                            value={load.type}
-                            onChange={(e) => updateLoad(load.id, 'type', e.target.value)}
-                            className={`w-full p-2.5 bg-white border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm appearance-none cursor-pointer ${load.type === '' ? 'text-slate-400 border-slate-300' : 'text-slate-900 border-slate-300'}`}
-                        >
-                            <option value="" disabled>Pilih Jenis Beban</option>
-                            {Object.entries(LOAD_LABELS).map(([key, label]) => (
-                            <option key={key} value={key} className="text-slate-900">{label}</option>
-                            ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Bilangan (Unit/Litar)</label>
-                      <input 
-                        type="number" 
-                        min="1"
-                        placeholder="1"
-                        value={load.qty}
-                        onChange={(e) => updateLoad(load.id, 'qty', e.target.value === '' ? '' : parseInt(e.target.value))}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
-                      />
-                    </div>
-
-                    <div className="md:col-span-3">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 flex justify-between">
-                        <span>{isSocketType(load.type) ? 'Rating (Ampere)' : 'Kuasa (Watt)'}</span>
-                      </label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        placeholder={isSocketType(load.type) ? "Contoh: 32" : "Contoh: 60"}
-                        value={load.power}
-                        onChange={(e) => updateLoad(load.id, 'power', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder:text-slate-300"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2 flex justify-end">
-                      <button 
-                        onClick={() => removeLoad(load.id)}
-                        className="text-red-500 hover:bg-red-50 p-2.5 rounded-md transition-colors w-full md:w-auto flex justify-center border border-transparent hover:border-red-100"
-                        disabled={loads.length === 1}
-                        title="Padam Beban"
-                      >
-                        <Trash2Icon size={18} />
-                      </button>
-                    </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Bilangan</label>
+                    <input type="text" value={l.qty} onChange={e => updateLoad(l.id, 'qty', e.target.value)} placeholder="Cth: 5" className="w-full p-2 border rounded mt-1 text-sm font-mono" />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Kuasa (W) / Rating (A)</label>
+                    <input type="text" value={l.power} onChange={e => updateLoad(l.id, 'power', e.target.value)} placeholder="Cth: 100" className="w-full p-2 border rounded mt-1 text-sm font-mono" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <button onClick={() => setLoads(loads.filter(x => x.id !== l.id))} className="w-full p-2 text-red-500 hover:bg-red-50 rounded" disabled={loads.length === 1}><Trash2Icon size={18} className="mx-auto" /></button>
                   </div>
                 </div>
               ))}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm animate-pulse">
-                  <AlertCircleIcon size={18} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
-                <button 
-                  onClick={addLoad}
-                  className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium group"
-                >
-                  <PlusIcon size={20} className="group-hover:scale-110 transition-transform" />
-                  Tambah Beban
-                </button>
-                <button 
-                  onClick={handleCalculate}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 font-bold text-lg active:scale-95 transform duration-150"
-                >
-                  <CalculatorIcon size={20} />
-                  Kira
-                </button>
+              {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200">{error}</div>}
+              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t">
+                <button onClick={() => setLoads([...loads, { id: Math.random().toString(36).substr(2, 9), type: '', qty: '', power: '' }])} className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2"><PlusIcon size={20} /> Tambah Beban</button>
+                <button onClick={handleCalculate} className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-2"><CalculatorIcon size={20} /> Kira</button>
               </div>
             </div>
           </div>
-
           {result && (
-            <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up">
+            <div id="results-section" className="bg-white rounded-xl shadow-lg border animate-slide-up overflow-hidden">
               <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
-                <div className="p-2 bg-slate-800 rounded-lg">
-                    <ZapIcon className="text-yellow-400" size={24} />
-                </div>
-                <div>
-                    <h2 className="text-xl font-bold">Keputusan Pengiraan</h2>
-                    <p className="text-slate-400 text-sm">Anggaran keperluan arus maksimum (Maximum Demand)</p>
-                </div>
+                <ZapIcon className="text-yellow-400" size={24} />
+                <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Anggaran keperluan arus maksimum (MD)</p></div>
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200 text-xs tracking-wider">
-                    <tr>
-                      <th className="px-6 py-4">Jenis Beban</th>
-                      <th className="px-6 py-4 text-right">Arus Maksimum (A)</th>
-                      <th className="px-6 py-4 text-right bg-blue-50 text-blue-900 border-l border-blue-100">Arus Anggaran (A)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {result.rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 font-medium text-slate-800">{row.label}</td>
-                        <td className="px-6 py-4 text-right font-mono text-slate-600">{row.maxCurrent.toFixed(2)}</td>
-                        <td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50 border-l border-blue-100">{row.estCurrent.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-base">
-                    <tr>
-                      <td className="px-6 py-4 text-slate-800">JUMLAH KESELURUHAN</td>
-                      <td className="px-6 py-4 text-right text-slate-800">{result.totalMax.toFixed(2)} A</td>
-                      <td className="px-6 py-4 text-right text-blue-700 bg-blue-100 border-l border-blue-200">{result.totalEst.toFixed(2)} A</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 border-b">
+                  <tr><th className="px-6 py-4">Beban</th><th className="px-6 py-4 text-right">Max (A)</th><th className="px-6 py-4 text-right bg-blue-50">Anggaran (A)</th></tr>
+                </thead>
+                <tbody className="divide-y">
+                  {result.rows.map((r, i) => (
+                    <tr key={i}><td className="px-6 py-4 font-medium">{r.label}</td><td className="px-6 py-4 text-right font-mono">{r.maxCurrent.toFixed(2)}</td><td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50">{r.estCurrent.toFixed(2)}</td></tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-slate-100 font-bold border-t">
+                  <tr><td className="px-6 py-4">JUMLAH</td><td className="px-6 py-4 text-right">{result.totalMax.toFixed(2)} A</td><td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td></tr>
+                </tfoot>
+              </table>
             </div>
           )}
-
           <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-blue-900 text-sm">
-            <h3 className="font-bold mb-2 flex items-center gap-2">
-                <AlertCircleIcon size={16} />
-                Panduan Penggunaan:
-            </h3>
-            <ul className="list-disc list-inside space-y-1 text-blue-800/80 ml-2">
-              <li>Pilih <strong>Jenis Beban</strong> yang sesuai daripada senarai.</li>
-              <li>Masukkan <strong>Kuasa (Watt)</strong>. Untuk soket, masukkan nilai dalam <strong>Ampere (A)</strong>.</li>
-              <li>Tekan butang <strong>Tambah Beban</strong> untuk menambah peralatan lain.</li>
-              <li>Tekan butang <strong>Kira</strong> untuk mendapatkan keputusan pengiraan.</li>
-              <li>Untuk <strong>Soket Gelang & Jejari</strong>: Masukkan jumlah litar sebagai 'Bilangan' dan rating litar (cth: 32A atau 20A) di ruangan 'Ampere'.</li>
+            <h3 className="font-bold mb-2 flex items-center gap-2"><AlertCircleIcon size={16} /> Panduan Penggunaan:</h3>
+            <ul className="space-y-1 text-blue-800/80 ml-2">
+              <li>-Pilih Jenis Beban yang sesuai daripada senarai.</li>
+              <li>-Masukkan Kuasa Beban (Watt). Untuk soket, masukkan nilai Ampere (A).</li>
+              <li>-Tekan butang Tambah Beban untuk menambah beban lain.</li>
+              <li>-Tekan butang Kira untuk mendapatkan keputusan pengiraan.</li>
             </ul>
           </div>
         </div>
       );
     };
 
-    // Main App Component
-    const App = () => {
-      const [activeTab, setActiveTab] = useState('calc');
+    const Quiz = () => {
+      const [answers, setAnswers] = useState({});
+      const [showResult, setShowResult] = useState({});
 
-      const navItems = [
-        { id: 'notes', label: 'Nota', icon: BookOpenIcon },
-        { id: 'calc', label: 'Pengiraan', icon: CalculatorIcon },
-        { id: 'quiz', label: 'Soalan', icon: HelpCircleIcon },
+      const mudah = [
+        { id: 1, text: "1. Kirakan Faktor kepelbagaian bagi 6 biji Lampu Filamen berkuasa 100W.", options: [{ v: 'a', l: '1.72 A' }, { v: 'b', l: '2.61 A' }, { v: 'c', l: '1.30 A' }], ans: 'a', exp: "6x100/230 = 2.61A. 2.61 x 0.66 = 1.72A." },
+        { id: 2, text: "2. Kirakan Faktor kepelbagaian bagi 7 biji Lampu Kalimantang berkuasa 40W.", options: [{ v: 'a', l: '2.19 A' }, { v: 'b', l: '1.45 A' }], ans: 'b', exp: "7x40x1.8/230 = 2.19A. 2.19 x 0.66 = 1.45A." },
+        { id: 3, text: "3. Kirakan Faktor kepelbagaian bagi 5 kipas siling berkuasa 65W.", options: [{ v: 'a', l: '1.10 A' }, { v: 'b', l: '1.66 A' }], ans: 'a', exp: "5x65/(230x0.85) = 1.66A. 1.66 x 0.66 = 1.10A." },
+        { id: 4, text: "4. Kirakan Arus Maksimum bagi 2 unit pemanas air (segera) berkuasa 3kW.", options: [{ v: 'a', l: '13.04 A' }, { v: 'b', l: '26.09 A' }], ans: 'b', exp: "2x3000/230 = 26.09A." },
+        { id: 5, text: "5. Kirakan Arus Maksimum bagi 2 unit Penghawa dingin berkuasa 1.5Hp.", options: [{ v: 'a', l: '11.45 A' }, { v: 'b', l: '7.63 A' }], ans: 'a', exp: "1.5Hp=1119W. 2x1119/(230x0.85)=11.45A." }
       ];
 
       return (
+        <div className="space-y-10 animate-fade-in pb-12">
+          <div className="bg-white p-8 rounded-xl border text-center"><h2 className="text-2xl font-bold">Latihan Faktor Kepelbagaian</h2><p className="text-slate-500 mt-1">Uji kefahaman anda berdasarkan MS 1979</p></div>
+          <section className="space-y-6">
+            <h3 className="text-xl font-bold border-l-4 border-green-500 pl-4 uppercase">Tahap: Mudah</h3>
+            {mudah.map(q => (
+              <div key={q.id} className="bg-white p-6 rounded-xl border shadow-sm">
+                <p className="font-bold text-slate-800 mb-4">{q.text}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  {q.options.map(o => (
+                    <button key={o.v} onClick={() => !showResult[q.id] && setAnswers({ ...answers, [q.id]: o.v })} className={`p-4 border-2 rounded-xl text-left font-semibold ${answers[q.id] === o.v ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50/50'}`}>{o.l}</button>
+                  ))}
+                </div>
+                {!showResult[q.id] ? (
+                  <button onClick={() => answers[q.id] && setShowResult({ ...showResult, [q.id]: true })} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold" disabled={!answers[q.id]}>Semak</button>
+                ) : (
+                  <div className={`p-4 rounded-xl border-2 ${answers[q.id] === q.ans ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                    <p className="font-bold">{answers[q.id] === q.ans ? 'Tepat!' : 'Salah!'}</p>
+                    <p className="text-sm mt-1"><strong>Penjelasan:</strong> {q.exp}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+          <section className="space-y-6">
+            <h3 className="text-xl font-bold border-l-4 border-yellow-500 pl-4 uppercase">Tahap: Sederhana</h3>
+            <div className="bg-white p-6 rounded-xl border space-y-4">
+              <p>1. Sebuah rumah kediaman kecil mempunyai 7 lampu filamen berkuasa 100W, 5 lampu kalimantang berkuasa 45W, 2 x 20A soket alir keluar 13A (jejari) dan sebuah pemanas air (segera) 6kW. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
+              <p>2. Sebuah rumah kediaman kecil mempunyai 10 lampu filamen berkuasa 100W, 6 Kipas siling berkuasa 85W, 2 x 20A(fius) litar akhir soket alir keluar 13A (jejari), dan sebuah penghawa dingin 1.5Hp. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
+            </div>
+          </section>
+          <section className="space-y-6">
+            <h3 className="text-xl font-bold border-l-4 border-red-500 pl-4 uppercase">Tahap: Sukar</h3>
+            <div className="bg-white p-6 rounded-xl border space-y-6">
+              <div>
+                <p className="font-bold underline mb-2">Soalan 1</p>
+                <p className="mb-2">Sebuah rumah kediaman banglo 1 fasa 230V mempunyai beban-beban seperti berikut:</p>
+                <ul className="list-disc ml-6 text-slate-600 text-sm"><li>14 x 36W Kalimantang</li><li>8 x 60W Filamen</li><li>6 x 75W Kipas</li><li>15 Soket 13A</li><li>2 x 1hp Aircond</li><li>1 x 3.5kW Pemanas Segera</li></ul>
+                <p className="mt-2 text-sm italic">Kirakan arus maksimum dan arus anggaran.</p>
+              </div>
+              <div className="border-t pt-4">
+                <p className="font-bold underline mb-2">Soalan 2</p>
+                <p className="mb-2">Rumah kediaman 1 fasa 230V, 50Hz mempunyai beban:</p>
+                <ul className="list-disc ml-6 text-slate-600 text-sm"><li>12 x 60W Filamen</li><li>10 x 40W Kalimantang</li><li>4 x 85W Kipas</li><li>8 x 13A Soket</li><li>2 x 3kW Pemanas (Serta merta)</li><li>1 x 7kW Pemasak + 13A soket</li><li>1 x 1.5Hp Aircond</li></ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [tab, setTab] = useState('calc');
+      return (
         <div className="flex flex-col min-h-screen">
-          <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg sticky top-0 z-50">
-            <div className="max-w-5xl mx-auto px-4 py-6 md:py-8 text-center">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">Kalkulator Faktor Kepelbagaian</h1>
-              <p className="text-blue-100 text-xs md:text-sm font-light">
-                Berdasarkan piawaian elektrik Malaysia (MS 1979)
-              </p>
+          <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white sticky top-0 z-50 shadow-lg">
+            <div className="max-w-5xl mx-auto px-4 py-6 text-center">
+              <h1 className="text-2xl font-bold">Kalkulator Faktor Kepelbagaian</h1>
+              <p className="text-blue-100 text-xs mt-1">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
             </div>
-            
-            <div className="bg-blue-800/50 backdrop-blur-sm border-t border-blue-600/30">
-              <nav className="max-w-5xl mx-auto px-4 flex justify-center space-x-2 py-3">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all text-sm font-medium ${
-                      activeTab === item.id
-                        ? 'bg-white text-blue-900 shadow-md transform scale-105' 
-                        : 'text-blue-100 hover:bg-blue-700/80 hover:text-white'
-                    }`}
-                  >
-                    <item.icon size={16} />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
+            <nav className="bg-blue-800/50 py-3 flex justify-center space-x-2">
+              {[
+                { id: 'notes', label: 'Nota', icon: BookOpenIcon },
+                { id: 'calc', label: 'Pengiraan', icon: CalculatorIcon },
+                { id: 'quiz', label: 'Soalan', icon: HelpCircleIcon }
+              ].map(item => (
+                <button key={item.id} onClick={() => setTab(item.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${tab === item.id ? 'bg-white text-blue-900' : 'text-blue-100 hover:bg-blue-700'}`}>
+                  <item.icon size={16} /> {item.label}
+                </button>
+              ))}
+            </nav>
           </header>
-          
-          <main className="flex-grow container max-w-5xl mx-auto px-4 py-8">
-            {activeTab === 'notes' && <Notes />}
-            {activeTab === 'calc' && <Calculator />}
-            {activeTab === 'quiz' && <Quiz />}
+          <main className="max-w-5xl mx-auto px-4 py-8 flex-grow">
+            {tab === 'notes' && <Notes />}
+            {tab === 'calc' && <Calculator />}
+            {tab === 'quiz' && <Quiz />}
           </main>
-          
-          <footer className="bg-slate-900 text-slate-400 py-8 mt-auto">
-            <div className="container mx-auto px-4 text-center">
-                <p className="font-medium text-slate-300 mb-2">Kalkulator Faktor Kepelbagaian MS 1979</p>
-                <p className="text-xs text-slate-500">
-                    Dibangunkan untuk tujuan pembelajaran dan rujukan pantas. Sila rujuk buku piawaian rasmi untuk pengiraan kritikal.
-                </p>
-                <p className="text-xs text-slate-600 mt-4">© {new Date().getFullYear()} All rights reserved.</p>
-            </div>
+          <footer className="bg-slate-900 text-slate-500 py-8 text-center text-xs">
+            <p className="mb-2 text-slate-400">© {new Date().getFullYear()} Kalkulator Faktor Kepelbagaian MS 1979</p>
+            <p>Dibangunkan untuk rujukan pendidikan elektrik.</p>
           </footer>
         </div>
       );
     };
 
-    // Render Logic
-    const rootElement = document.getElementById('root');
-    const root = ReactDOM.createRoot(rootElement);
+    const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
 </body>
