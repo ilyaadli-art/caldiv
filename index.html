@@ -4,9 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kalkulator Faktor Kepelbagaian | MS 1979</title>
+  
+  <!-- CDNs -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
     ::-webkit-scrollbar { width: 8px; }
@@ -18,26 +21,16 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body class="bg-slate-50 text-slate-800">
   <div id="root"></div>
 
+  <!-- React & App Logic -->
   <script type="text/babel" data-type="module">
-    import React, { useState, useEffect } from 'https://esm.sh/react@19.2.3';
-    import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
+    import React, { useState, useEffect, useMemo } from 'https://esm.sh/react@18.2.0';
+    import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
 
-    // --- TETAPAN & JENIS ---
-    const DEFAULT_VOLTAGE = 230;
-
+    // --- CONSTANTS & TYPES ---
     const LoadType = {
       LIGHTING: 'lighting',
       FLUORESCENT: 'fluorescent',
@@ -53,6 +46,8 @@
       FINAL_CIRCUIT_RADIAL: 'final_circuit_radial',
       OTHER_SOCKETS: 'other_sockets'
     };
+
+    const DEFAULT_VOLTAGE = 230;
 
     const LOAD_LABELS = {
       [LoadType.LIGHTING]: 'Lampu (Filamen)',
@@ -70,42 +65,11 @@
       [LoadType.OTHER_SOCKETS]: 'Soket Alir Keluar (Lain-lain)'
     };
 
-    // --- IKON ---
-    const CalculatorIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
-    );
-    const BookOpenIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-    );
-    const HelpCircleIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-    );
-    const PlusIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    );
-    const Trash2Icon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-    );
-    const RotateCcwIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-    );
-    const ZapIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    );
-    const CheckCircle2Icon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-    );
-    const XCircleIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-    );
-    const AlertCircleIcon = ({ size = 24, className = "" }) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-    );
-
-    // --- SERVIS PENGIRAAN ---
+    // --- CALCULATION SERVICE ---
     const calculateDiversity = (loads, voltage = DEFAULT_VOLTAGE) => {
       const groups = {};
       const validLoads = loads.filter(l => l.type !== '' && l.qty !== '' && Number(l.qty) > 0 && l.power !== '' && Number(l.power) >= 0);
+      
       validLoads.forEach(l => {
         if (!groups[l.type]) groups[l.type] = [];
         groups[l.type].push(l);
@@ -119,7 +83,9 @@
         let groupMax = 0;
         let groupEst = 0;
 
-        const sumMaxWatts = (factor = 1, divisor = voltage) => group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
+        const sumMaxWatts = (factor = 1, divisor = voltage) => 
+          group.reduce((s, l) => s + (Number(l.qty) * Number(l.power) * factor) / divisor, 0);
+
         const expandCircuits = (isAmps = true) => {
           const circuits = [];
           group.forEach(l => {
@@ -178,7 +144,6 @@
             break;
         }
 
-        // Bundarkan setiap baris kepada 2 titik perpuluhan sebelum ditambah ke jumlah keseluruhan
         const groupMaxRounded = Math.round(groupMax * 100) / 100;
         const groupEstRounded = Math.round(groupEst * 100) / 100;
 
@@ -190,8 +155,40 @@
       return { rows, totalMax, totalEst };
     };
 
-    // --- KOMPONEN ---
+    // --- ICONS ---
+    const CalculatorIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+    );
 
+    const BookOpenIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    );
+
+    const HelpCircleIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    );
+
+    const PlusIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    );
+
+    const Trash2Icon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+    );
+
+    const RotateCcwIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    );
+
+    const ZapIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    );
+
+    const AlertCircleIcon = ({ size = 24, className = "" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+    );
+
+    // --- UI COMPONENTS ---
     const Notes = () => {
       const tableData = [
         { type: "Lampu (Filamen)", max: "Bilangan × Kuasa / 230V", est: "66% daripada arus maksimum" },
@@ -222,10 +219,10 @@
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {tableData.map((row, i) => (
-                    <tr key={i} className="hover:bg-slate-50">
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{row.type}</td>
-                      <td className="px-6 py-4 text-slate-600">{row.max}</td>
-                      <td className="px-6 py-4 text-slate-600">{row.est}</td>
+                      <td className="px-6 py-4 text-slate-600 font-mono text-xs">{row.max}</td>
+                      <td className="px-6 py-4 text-blue-700 font-medium">{row.est}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -236,20 +233,76 @@
             <h3 className="font-bold mb-3 flex items-center gap-2 text-lg">
               <BookOpenIcon size={20} className="text-yellow-700" /> Nota Pengetahuan:
             </h3>
-            <ol className="list-decimal list-inside space-y-2 text-yellow-800 ml-1">
-              <li><strong>230V</strong> digunakan untuk Voltan Satu Fasa merujuk kepada TNB.</li>
-              <li>Faktor Kuasa beban minimum <strong>0.85</strong> merujuk kepada TNB.</li>
-              <li>Faktor Pembetulan <strong>1.8</strong> untuk lampu kalimantang merujuk kepada ST.</li>
-              <li><strong>1 hp = 746W</strong> merujuk kepada JKR.</li>
+            <ol className="list-decimal list-inside space-y-3 text-yellow-800/90 ml-1">
+              <li><strong>230V</strong> digunakan sebagai piawai Voltan Satu Fasa di Malaysia (TNB).</li>
+              <li>Faktor Kuasa beban minimum <strong>0.85</strong> digunakan untuk pengiraan motor/kipas (TNB).</li>
+              <li>Faktor Pembetulan <strong>1.8</strong> untuk lampu kalimantang (induktif) merujuk kepada Suruhanjaya Tenaga.</li>
+              <li><strong>1 hp = 746W</strong> digunakan untuk penukaran kuasa motor kepada Watt (JKR).</li>
             </ol>
           </div>
         </div>
       );
     };
 
-    const Calculator = () => {
-      const [loads, setLoads] = useState([{ id: '1', type: '', qty: '', power: '' }]);
-      const [result, setResult] = useState(null);
+    const Quiz = () => {
+      const [answers, setAnswers] = useState({});
+      const [showResult, setShowResult] = useState({});
+
+      const mudah = [
+        { id: 1, text: "1. Kirakan Faktor kepelbagaian bagi 6 biji Lampu Filamen berkuasa 100W.", options: [{ v: 'a', l: '1.72 A' }, { v: 'b', l: '2.61 A' }, { v: 'c', l: '1.30 A' }], ans: 'a', exp: "6 x 100 / 230 = 2.61A (Maks). Kemudian 2.61 x 0.66 = 1.72A (Diversity)." },
+        { id: 2, text: "2. Kirakan Faktor kepelbagaian bagi 7 biji Lampu Kalimantang berkuasa 40W.", options: [{ v: 'a', l: '2.19 A' }, { v: 'b', l: '1.45 A' }], ans: 'b', exp: "7 x 40 x 1.8 / 230 = 2.19A. Kemudian 2.19 x 0.66 = 1.45A." },
+        { id: 3, text: "3. Kirakan Faktor kepelbagaian bagi 5 kipas siling berkuasa 65W.", options: [{ v: 'a', l: '1.10 A' }, { v: 'b', l: '1.66 A' }], ans: 'a', exp: "5 x 65 / (230 x 0.85) = 1.66A. Kemudian 1.66 x 0.66 = 1.10A." },
+        { id: 4, text: "4. Kirakan Arus Maksimum bagi 2 unit pemanas air (segera) berkuasa 3kW.", options: [{ v: 'a', l: '13.04 A' }, { v: 'b', l: '26.09 A' }], ans: 'b', exp: "2 x 3000 / 230 = 26.09A." },
+        { id: 5, text: "5. Kirakan Arus Maksimum bagi 2 unit Penghawa dingin berkuasa 1.5Hp.", options: [{ v: 'a', l: '11.45 A' }, { v: 'b', l: '7.63 A' }], ans: 'a', exp: "1.5Hp = 1119W (approx). 2 x 1119 / (230 x 0.85) = 11.45A." }
+      ];
+
+      return (
+        <div className="space-y-10 animate-fade-in pb-12">
+          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center shadow-sm">
+            <h2 className="text-2xl font-bold text-slate-800">Latihan Faktor Kepelbagaian</h2>
+            <p className="text-slate-500 mt-1">Uji kefahaman anda berdasarkan standard MS 1979</p>
+          </div>
+          <section className="space-y-6">
+            <h3 className="text-xl font-bold border-l-4 border-green-500 pl-4 uppercase text-slate-700">Tahap: Mudah</h3>
+            {mudah.map(q => (
+              <div key={q.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                <p className="font-bold text-slate-800 mb-4">{q.text}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  {q.options.map(o => (
+                    <button 
+                      key={o.v} 
+                      onClick={() => !showResult[q.id] && setAnswers({ ...answers, [q.id]: o.v })} 
+                      className={`p-4 border-2 rounded-xl text-left font-semibold transition-all ${answers[q.id] === o.v ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-100 bg-slate-50/50 hover:border-blue-200 text-slate-600'}`}
+                    >
+                      <span className="inline-block w-8 h-8 rounded-full bg-white border border-slate-200 text-center leading-7 mr-3 text-xs shadow-sm">{o.v.toUpperCase()}</span>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+                {!showResult[q.id] ? (
+                  <button 
+                    onClick={() => answers[q.id] && setShowResult({ ...showResult, [q.id]: true })} 
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold shadow hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    disabled={!answers[q.id]}
+                  >
+                    Semak Jawapan
+                  </button>
+                ) : (
+                  <div className={`p-4 rounded-xl border-2 animate-slide-up ${answers[q.id] === q.ans ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                    <p className="font-bold flex items-center gap-2">
+                      {answers[q.id] === q.ans ? '✅ Tepat!' : '❌ Salah!'}
+                    </p>
+                    <p className="text-sm mt-2 leading-relaxed"><strong>Penjelasan:</strong> {q.exp}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+        </div>
+      );
+    };
+
+    const Calculator = ({ loads, setLoads, result, setResult }) => {
       const [error, setError] = useState(null);
 
       const updateLoad = (id, field, value) => {
@@ -261,15 +314,38 @@
           if (parts.length > 2) san = parts[0] + '.' + parts.slice(1).join('');
         }
         setLoads(loads.map(l => l.id === id ? { ...l, [field]: san } : l));
-        setResult(null); setError(null);
+        setResult(null); 
+        setError(null);
       };
 
       const handleCalculate = () => {
         if (loads.some(l => !l.type || !l.qty || !l.power)) {
-          setError("Sila pastikan semua ruangan telah diisi."); return;
+          setError("Sila pastikan semua ruangan telah diisi."); 
+          return;
         }
-        setResult(calculateDiversity(loads));
-        setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+        const newResult = calculateDiversity(loads);
+        setResult(newResult);
+        setTimeout(() => {
+          const resEl = document.getElementById('results-section');
+          if (resEl) resEl.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      };
+
+      const resetLoads = () => {
+        setLoads([{ id: '1', type: '', qty: '', power: '' }]);
+        setResult(null);
+        setError(null);
+      };
+
+      const addLoadRow = () => {
+        setLoads([...loads, { id: Math.random().toString(36).substring(2, 11), type: '', qty: '', power: '' }]);
+      };
+
+      const removeLoadRow = (id) => {
+        if (loads.length > 1) {
+          setLoads(loads.filter(x => x.id !== id));
+          setResult(null);
+        }
       };
 
       return (
@@ -277,183 +353,143 @@
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
               <h2 className="text-xl font-bold">Senarai Beban</h2>
-              <button onClick={() => setLoads([{ id: '1', type: '', qty: '', power: '' }])} className="p-2 text-slate-400 hover:text-red-500"><RotateCcwIcon size={18} /></button>
+              <button onClick={resetLoads} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Padam Semua">
+                <RotateCcwIcon size={18} />
+              </button>
             </div>
             <div className="p-6 space-y-4">
-              {loads.map((l, i) => (
-                <div key={l.id} className="relative p-4 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              {loads.map((l) => (
+                <div key={l.id} className="relative p-4 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   <div className="md:col-span-5">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Jenis Beban</label>
-                    <select value={l.type} onChange={e => updateLoad(l.id, 'type', e.target.value)} className="w-full p-2 border rounded mt-1 text-sm">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Jenis Beban</label>
+                    <select value={l.type} onChange={e => updateLoad(l.id, 'type', e.target.value)} className="w-full p-2 border border-slate-300 rounded mt-1 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                       <option value="">Pilih Jenis Beban</option>
                       {Object.entries(LOAD_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Bilangan</label>
-                    <input type="text" value={l.qty} onChange={e => updateLoad(l.id, 'qty', e.target.value)} placeholder="Cth: 5" className="w-full p-2 border rounded mt-1 text-sm font-mono" />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Bilangan</label>
+                    <input type="text" value={l.qty} onChange={e => updateLoad(l.id, 'qty', e.target.value)} placeholder="Cth: 5" className="w-full p-2 border border-slate-300 rounded mt-1 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Kuasa (W) / Rating (A)</label>
-                    <input type="text" value={l.power} onChange={e => updateLoad(l.id, 'power', e.target.value)} placeholder="Cth: 100" className="w-full p-2 border rounded mt-1 text-sm font-mono" />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kuasa (W) / Rating (A)</label>
+                    <input type="text" value={l.power} onChange={e => updateLoad(l.id, 'power', e.target.value)} placeholder="Cth: 100" className="w-full p-2 border border-slate-300 rounded mt-1 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div className="md:col-span-2">
-                    <button onClick={() => setLoads(loads.filter(x => x.id !== l.id))} className="w-full p-2 text-red-500 hover:bg-red-50 rounded" disabled={loads.length === 1}><Trash2Icon size={18} className="mx-auto" /></button>
+                    <button onClick={() => removeLoadRow(l.id)} className="w-full p-2 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-30" disabled={loads.length === 1}>
+                      <Trash2Icon size={18} className="mx-auto" />
+                    </button>
                   </div>
                 </div>
               ))}
-              {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200">{error}</div>}
-              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t">
-                <button onClick={() => setLoads([...loads, { id: Math.random().toString(36).substr(2, 9), type: '', qty: '', power: '' }])} className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2"><PlusIcon size={20} /> Tambah Beban</button>
-                <button onClick={handleCalculate} className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-2"><CalculatorIcon size={20} /> Kira</button>
+              {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200 flex items-center gap-2"><AlertCircleIcon size={16} />{error}</div>}
+              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
+                <button onClick={addLoadRow} className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2 font-semibold"><PlusIcon size={20} /> Tambah Beban</button>
+                <button onClick={handleCalculate} className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md transform active:scale-95 transition-all flex items-center justify-center gap-2"><CalculatorIcon size={20} /> Kira Sekarang</button>
               </div>
             </div>
           </div>
+
           {result && (
             <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 animate-slide-up overflow-hidden">
-              <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
-                <ZapIcon className="text-yellow-400" size={24} />
-                <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Arus Maksimum dan Arus Anggaran </p></div>
+              <div className="bg-slate-900 text-white p-6 flex items-center gap-4">
+                <div className="bg-blue-500/20 p-2 rounded-lg"><ZapIcon className="text-yellow-400" size={24} /></div>
+                <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Arus Maksimum dan Arus Anggaran (Diversity Factor)</p></div>
               </div>
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 border-b">
-                  <tr><th className="px-6 py-4">Beban</th><th className="px-6 py-4 text-right">Arus Maksimum (A)</th><th className="px-6 py-4 text-right bg-blue-50">Arus Anggaran (A)</th></tr>
-                </thead>
-                <tbody className="divide-y">
-                  {result.rows.map((r, i) => (
-                    <tr key={i}><td className="px-6 py-4 font-medium">{r.label}</td><td className="px-6 py-4 text-right font-mono">{r.maxCurrent.toFixed(2)}</td><td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50">{r.estCurrent.toFixed(2)}</td></tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-slate-100 font-bold border-t">
-                  <tr><td className="px-6 py-4">JUMLAH KESELURUHAN</td><td className="px-6 py-4 text-right">{result.totalMax.toFixed(2)} A</td><td className="px-6 py-4 text-right text-blue-700 bg-blue-100">{result.totalEst.toFixed(2)} A</td></tr>
-                </tfoot>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 border-b">
+                    <tr><th className="px-6 py-4">Beban</th><th className="px-6 py-4 text-right">Arus Maksimum (A)</th><th className="px-6 py-4 text-right bg-blue-50 text-blue-900">Arus Anggaran (A)</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {result.rows.map((r, i) => (
+                      <tr key={i}>
+                        <td className="px-6 py-4 font-medium text-slate-900">{r.label}</td>
+                        <td className="px-6 py-4 text-right font-mono text-slate-600">{r.maxCurrent.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right font-mono font-bold text-blue-700 bg-blue-50/50">{r.estCurrent.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-200">
+                    <tr>
+                      <td className="px-6 py-4 text-slate-800">JUMLAH KESELURUHAN</td>
+                      <td className="px-6 py-4 text-right text-slate-900 font-mono">{result.totalMax.toFixed(2)} A</td>
+                      <td className="px-6 py-4 text-right text-blue-700 bg-blue-100 font-mono text-lg">{result.totalEst.toFixed(2)} A</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           )}
-          <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 text-blue-900 text-sm">
-            <h3 className="font-bold mb-2 flex items-center gap-2"><AlertCircleIcon size={16} /> Panduan Penggunaan:</h3>
-            <ul className="space-y-1 text-blue-800/80 ml-2">
-              <li>1. Pilih Jenis Beban yang sesuai daripada senarai.</li>
-              <li>2. Masukkan Kuasa Beban (Watt). Untuk soket, masukkan nilai Ampere (A).</li>
-              <li>3. Tekan butang Tambah Beban untuk menambah beban lain.</li>
-              <li>4. Tekan butang Kira untuk mendapatkan keputusan pengiraan.</li>
-            </ul>
-          </div>
         </div>
       );
     };
 
-    const Quiz = () => {
-      const [answers, setAnswers] = useState({});
-      const [showResult, setShowResult] = useState({});
-
-      const mudah = [
-        { id: 1, text: "1. Kirakan Faktor kepelbagaian bagi 6 biji Lampu Filamen berkuasa 100W.", options: [{ v: 'a', l: '1.72 A' }, { v: 'b', l: '2.61 A' }, { v: 'c', l: '1.30 A' }], ans: 'a', exp: "6x100/230 = 2.61A. 2.61 x 0.66 = 1.72A." },
-        { id: 2, text: "2. Kirakan Faktor kepelbagaian bagi 7 biji Lampu Kalimantang berkuasa 40W.", options: [{ v: 'a', l: '2.19 A' }, { v: 'b', l: '1.45 A' }], ans: 'b', exp: "7x40x1.8/230 = 2.19A. 2.19 x 0.66 = 1.45A." },
-        { id: 3, text: "3. Kirakan Faktor kepelbagaian bagi 5 kipas siling berkuasa 65W.", options: [{ v: 'a', l: '1.10 A' }, { v: 'b', l: '1.66 A' }], ans: 'a', exp: "5x65/(230x0.85) = 1.66A. 1.66 x 0.66 = 1.10A." },
-        { id: 4, text: "4. Kirakan Arus Maksimum bagi 2 unit pemanas air (segera) berkuasa 3kW.", options: [{ v: 'a', l: '13.04 A' }, { v: 'b', l: '26.09 A' }], ans: 'b', exp: "2x3000/230 = 26.09A." },
-        { id: 5, text: "5. Kirakan Arus Maksimum bagi 2 unit Penghawa dingin berkuasa 1.5Hp.", options: [{ v: 'a', l: '11.45 A' }, { v: 'b', l: '7.63 A' }], ans: 'a', exp: "1.5Hp=1119W. 2x1119/(230x0.85)=11.45A." }
-      ];
-
-      return (
-        <div className="space-y-10 animate-fade-in pb-12">
-          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center shadow-sm">
-            <h2 className="text-2xl font-bold">Latihan Faktor Kepelbagaian</h2>
-            <p className="text-slate-500 mt-1">Uji kefahaman anda berdasarkan MS 1979</p>
-          </div>
-          <section className="space-y-6">
-            <h3 className="text-xl font-bold border-l-4 border-green-500 pl-4 uppercase">Tahap: Mudah</h3>
-            {mudah.map(q => (
-              <div key={q.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <p className="font-bold text-slate-800 mb-4">{q.text}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  {q.options.map(o => (
-                    <button key={o.v} onClick={() => !showResult[q.id] && setAnswers({ ...answers, [q.id]: o.v })} className={`p-4 border-2 rounded-xl text-left font-semibold transition-all ${answers[q.id] === o.v ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50/50 hover:border-blue-200'}`}>{o.l}</button>
-                  ))}
-                </div>
-                {!showResult[q.id] ? (
-                  <button onClick={() => answers[q.id] && setShowResult({ ...showResult, [q.id]: true })} className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold shadow hover:bg-blue-700 transition-all active:scale-95" disabled={!answers[q.id]}>Semak Jawapan</button>
-                ) : (
-                  <div className={`p-4 rounded-xl border-2 animate-slide-up ${answers[q.id] === q.ans ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-                    <p className="font-bold">{answers[q.id] === q.ans ? 'Tepat!' : 'Salah!'}</p>
-                    <p className="text-sm mt-1"><strong>Penjelasan:</strong> {q.exp}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </section>
-          <section className="space-y-6">
-            <h3 className="text-xl font-bold border-l-4 border-yellow-500 pl-4 uppercase">Tahap: Sederhana</h3>
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-              <p className="text-slate-700 leading-relaxed">1. Sebuah rumah kediaman kecil mempunyai 7 lampu filamen berkuasa 100W, 5 lampu kalimantang berkuasa 45W, 2 x 20A soket alir keluar 13A (jejari) dan sebuah pemanas air (segera) 6kW. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
-              <p className="text-slate-700 leading-relaxed border-t pt-4">2. Sebuah rumah kediaman kecil mempunyai 10 lampu filamen berkuasa 100W, 6 Kipas siling berkuasa 85W, 2 x 20A(fius) litar akhir soket alir keluar 13A (jejari), dan sebuah penghawa dingin 1.5Hp. Kirakan jumlah arus keseluruhan dengan mengambil kira faktor kepelbagaian.</p>
-            </div>
-          </section>
-          <section className="space-y-6">
-            <h3 className="text-xl font-bold border-l-4 border-red-500 pl-4 uppercase">Tahap: Sukar</h3>
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm space-y-8">
-              <div>
-                <p className="font-bold underline text-slate-900 mb-4">Soalan 1</p>
-                <p className="mb-4 text-slate-700">Sebuah rumah kediaman banglo 1 fasa 230V mempunyai beban-beban seperti berikut:</p>
-                <ul className="list-none ml-4 text-slate-600 space-y-1">
-                  <li>i. 14 x 36W lampu kalimantang</li>
-                  <li>ii. 8 x 60W lampu filamen</li>
-                  <li>iii. 6 x 75W kipas siling</li>
-                  <li>iv. 15 soket alir keluar 13A</li>
-                  <li>v. 2 x 1hp Penghawa dingin</li>
-                  <li>vi. 1 x 3.5kW pemanas air (segera)</li>
-                </ul>
-                <p className="mt-4 text-sm italic text-slate-500 border-t pt-2">Kirakan arus maksimum dan arus anggaran mengikut peraturan MS IEC 60038.</p>
-              </div>
-              <div className="border-t pt-6">
-                <p className="font-bold underline text-slate-900 mb-4">Soalan 2</p>
-                <p className="mb-4 text-slate-700">Rumah kediaman 1 fasa 230V, 50Hz mempunyai beban:</p>
-                <ul className="list-none ml-4 text-slate-600 space-y-1">
-                  <li>i. 12 x 60W lampu filamen</li>
-                  <li>ii. 10 x 40W lampu kalimantang</li>
-                  <li>iii. 4 x 85W kipas siling</li>
-                  <li>iv. 8 x 13A suis soket alur keluar</li>
-                  <li>v. 2 x 3kW pemanas air (serta merta)</li>
-                  <li>vi. 1 x 7kW alat kawalan pemasak disertakan 13A suis soket alur keluar</li>
-                  <li>vii. 1 x 1.5Hp penghawa dingin</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-        </div>
-      );
-    };
+    // --- MAIN APP ---
+    const STORAGE_KEY_LOADS = 'caldiv_loads_data';
+    const STORAGE_KEY_RESULT = 'caldiv_result_data';
 
     const App = () => {
       const [tab, setTab] = useState('calc');
+      
+      const [loads, setLoads] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_LOADS);
+        return saved ? JSON.parse(saved) : [{ id: '1', type: '', qty: '', power: '' }];
+      });
+
+      const [result, setResult] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_RESULT);
+        return saved ? JSON.parse(saved) : null;
+      });
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_LOADS, JSON.stringify(loads));
+      }, [loads]);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_RESULT, JSON.stringify(result));
+      }, [result]);
+
       return (
         <div className="flex flex-col min-h-screen">
           <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white sticky top-0 z-50 shadow-lg">
-            <div className="max-w-5xl mx-auto px-4 py-6 text-center">
-              <h1 className="text-2xl font-bold tracking-tight">Kalkulator Faktor Kepelbagaian</h1>
-              <p className="text-blue-100 text-xs mt-1 font-light">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
+            <div className="max-w-5xl mx-auto px-4 py-8 text-center">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Kalkulator Faktor Kepelbagaian</h1>
+              <p className="text-blue-100 text-sm mt-2 font-light opacity-80">Berdasarkan piawaian elektrik Malaysia (MS 1979)</p>
             </div>
-            <nav className="bg-blue-800/50 backdrop-blur-sm py-3 flex justify-center space-x-2 border-t border-blue-600/30">
+            <nav className="bg-blue-800/50 backdrop-blur-md py-3 flex justify-center space-x-2 border-t border-blue-600/30">
               {[
                 { id: 'notes', label: 'Nota', icon: BookOpenIcon },
                 { id: 'calc', label: 'Pengiraan', icon: CalculatorIcon },
                 { id: 'quiz', label: 'Soalan', icon: HelpCircleIcon }
               ].map(item => (
-                <button key={item.id} onClick={() => setTab(item.id)} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${tab === item.id ? 'bg-white text-blue-900 shadow-md transform scale-105' : 'text-blue-100 hover:bg-blue-700'}`}>
-                  <item.icon size={16} /> {item.label}
+                <button 
+                  key={item.id} 
+                  onClick={() => setTab(item.id)} 
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                    tab === item.id 
+                    ? 'bg-white text-blue-900 shadow-xl transform scale-105' 
+                    : 'text-blue-100 hover:bg-blue-700/50 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={18} /> {item.label}
                 </button>
               ))}
             </nav>
           </header>
-          <main className="max-w-5xl mx-auto px-4 py-8 flex-grow">
-            {tab === 'notes' && <Notes />}
-            {tab === 'calc' && <Calculator />}
-            {tab === 'quiz' && <Quiz />}
+
+          <main className="max-w-5xl mx-auto w-full px-4 py-8 flex-grow">
+            <div className={tab === 'notes' ? 'block' : 'hidden'}><Notes /></div>
+            <div className={tab === 'calc' ? 'block' : 'hidden'}>
+              <Calculator loads={loads} setLoads={setLoads} result={result} setResult={setResult} />
+            </div>
+            <div className={tab === 'quiz' ? 'block' : 'hidden'}><Quiz /></div>
           </main>
-          <footer className="bg-slate-900 text-slate-500 py-10 text-center text-xs">
-            <div className="max-w-md mx-auto">
-              <p className="mb-2 text-slate-400 font-medium">© {new Date().getFullYear()} Kalkulator Faktor Kepelbagaian MS 1979</p>
-              <p className="leading-relaxed">Dibangunkan untuk rujukan pendidikan elektrik. Sila rujuk buku piawaian rasmi untuk tujuan reka bentuk kritikal.</p>
+
+          <footer className="bg-slate-900 text-slate-500 py-12 px-4 text-center">
+            <div className="max-w-md mx-auto space-y-4">
+              <p className="text-slate-400 font-semibold tracking-wide">© {new Date().getFullYear()} KALKULATOR FAKTOR KEPELBAGAIAN MS 1979</p>
+              <p className="text-xs leading-relaxed opacity-70">Aplikasi ini dibangunkan sebagai bahan rujukan dan alat bantu mengajar untuk bidang elektrikal. Sila rujuk dokumen rasmi untuk tujuan reka bentuk kritikal.</p>
             </div>
           </footer>
         </div>
@@ -465,5 +501,3 @@
   </script>
 </body>
 </html>
-
-
