@@ -313,11 +313,11 @@
             <div id="results-section" className="bg-white rounded-xl shadow-lg border border-slate-200 animate-slide-up overflow-hidden">
               <div className="bg-slate-900 text-white p-6 flex items-center gap-3">
                 <ZapIcon className="text-yellow-400" size={24} />
-                <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Anggaran keperluan arus maksimum (MD)</p></div>
+                <div><h2 className="text-xl font-bold">Keputusan Pengiraan</h2><p className="text-slate-400 text-sm">Arus Maksimum dan Arus Anggaran </p></div>
               </div>
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-50 border-b">
-                  <tr><th className="px-6 py-4">Beban</th><th className="px-6 py-4 text-right">Max (A)</th><th className="px-6 py-4 text-right bg-blue-50">Anggaran (A)</th></tr>
+                  <tr><th className="px-6 py-4">Beban</th><th className="px-6 py-4 text-right">Arus Maksimum (A)</th><th className="px-6 py-4 text-right bg-blue-50">Arus Anggaran (A)</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {result.rows.map((r, i) => (
@@ -465,4 +465,5 @@
   </script>
 </body>
 </html>
+
 
